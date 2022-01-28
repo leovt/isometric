@@ -26,6 +26,8 @@ def main():
 
     drag_start_coord = None
 
+    do_update = True
+
     while running:
         screen.fill((148, 179, 167))
         screen.blits(blit_sequence=blits(view, pygame.mouse.get_pos()), doreturn=False)
@@ -51,6 +53,8 @@ def main():
                 if event.key==pygame.K_RETURN:
                     w, h = screen.get_size()
                     view.rotate(w/2, h/2)
+                if event.key==pygame.K_SPACE:
+                    do_update = not do_update
             elif event.type==pygame.MOUSEBUTTONDOWN:
                 if event.button == 2:
                     drag_start_coord = event.pos
@@ -63,7 +67,8 @@ def main():
                     view.y_offset += event.pos[1] - drag_start_coord[1]
                     drag_start_coord = event.pos
 
-        update(1/FPS)
+        if do_update:
+            update(1/FPS)
         clock.tick(FPS)
 
 if __name__ == '__main__':
