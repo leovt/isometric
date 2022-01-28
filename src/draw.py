@@ -1,7 +1,7 @@
 import pygame
 from pygame import HWSURFACE, DOUBLEBUF, RESIZABLE, QUIT
 
-from world import load_assets, blits, View
+from world import load_assets, blits, View, update
 FPS = 60
 
 assets = {}
@@ -63,6 +63,7 @@ def main():
                     view.y_offset += event.pos[1] - drag_start_coord[1]
                     drag_start_coord = event.pos
 
+        update(1/FPS)
         clock.tick(FPS)
 
 if __name__ == '__main__':

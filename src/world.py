@@ -1,3 +1,4 @@
+import math
 from dataclasses import dataclass
 import pygame
 
@@ -26,7 +27,34 @@ IMAGES = {
     'cliffS_W': ('art/cliff_dirt.png',  0, 48,  64, 0, 64, 128),
     'cliffW_N': ('art/cliff_dirt.png', 64, 48, 256, 0, 64, 128),
     'cliffS_E': ('art/cliff_dirt.png',  0, 48, 320, 0, 64, 128),
+
+    'trkNS': ('art/models/track/0000.png', 64, 64, 0, 0, 128, 64),
+    'trkEW': ('art/models/track/0001.png', 64, 64, 0, 0, 128, 64),
+
+    'trk2NE_00': ('art/models/track/0002.png', 64, 64, 0, 0, 128, 64),
+    'trk2NE_01': ('art/models/track/0003.png', 64, 64, 0, 0, 128, 64),
+    'trk2NE_10': ('art/models/track/0004.png', 64, 64, 0, 0, 128, 64),
+    'trk2NE_11': ('art/models/track/0005.png', 64, 64, 0, 0, 128, 64),
+
+    'trk2NW_00': ('art/models/track/0006.png', 64, 64, 0, 0, 128, 64),
+    'trk2NW_01': ('art/models/track/0007.png', 64, 64, 0, 0, 128, 64),
+    'trk2NW_10': ('art/models/track/0008.png', 64, 64, 0, 0, 128, 64),
+    'trk2NW_11': ('art/models/track/0009.png', 64, 64, 0, 0, 128, 64),
+
+    'trk2SE_00': ('art/models/track/0010.png', 64, 64, 0, 0, 128, 64),
+    'trk2SE_01': ('art/models/track/0011.png', 64, 64, 0, 0, 128, 64),
+    'trk2SE_10': ('art/models/track/0012.png', 64, 64, 0, 0, 128, 64),
+    'trk2SE_11': ('art/models/track/0013.png', 64, 64, 0, 0, 128, 64),
+
+    'trk2SW_00': ('art/models/track/0014.png', 64, 64, 0, 0, 128, 64),
+    'trk2SW_01': ('art/models/track/0015.png', 64, 64, 0, 0, 128, 64),
+    'trk2SW_10': ('art/models/track/0016.png', 64, 64, 0, 0, 128, 64),
+    'trk2SW_11': ('art/models/track/0017.png', 64, 64, 0, 0, 128, 64),
+
     }
+for i in range(24):
+    IMAGES[f'lok{i:02d}'] = (f'art/models/lok/{i:04d}.png', 192, 96, 0, 0, 384, 192)
+
 
 TILES = {
     'Grass': ['grass', 'grass', 'grass', 'grass'],
@@ -53,17 +81,70 @@ TILES = {
     'CliffS_W': ['cliffS_W', None, None, 'cliffW_N'],
     'CliffE_S': [None, None, 'cliffW_N', 'cliffS_W'],
     'CliffN_E': [None, 'cliffW_N', 'cliffS_W', None],
+
+    'TrkNS': ['trkNS', 'trkEW', 'trkNS', 'trkEW'],
+    'TrkEW': ['trkEW', 'trkNS', 'trkEW', 'trkNS'],
+
+
+    'Trk2NE_00': ['trk2NE_00', 'trk2NW_01', 'trk2SW_11', 'trk2SE_10'],
+    'Trk2NE_01': ['trk2NE_01', 'trk2NW_11', 'trk2SW_10', 'trk2SE_00'],
+    'Trk2NE_10': ['trk2NE_10', 'trk2NW_00', 'trk2SW_01', 'trk2SE_11'],
+    'Trk2NE_11': ['trk2NE_11', 'trk2NW_10', 'trk2SW_00', 'trk2SE_01'],
+
+    'Trk2NW_00': ['trk2NW_00', 'trk2SW_01', 'trk2SE_11', 'trk2NE_10'],
+    'Trk2NW_01': ['trk2NW_01', 'trk2SW_11', 'trk2SE_10', 'trk2NE_00'],
+    'Trk2NW_10': ['trk2NW_10', 'trk2SW_00', 'trk2SE_01', 'trk2NE_11'],
+    'Trk2NW_11': ['trk2NW_11', 'trk2SW_10', 'trk2SE_00', 'trk2NE_01'],
+
+    'Trk2SW_00': ['trk2SW_00', 'trk2SE_01', 'trk2NE_11', 'trk2NW_10'],
+    'Trk2SW_01': ['trk2SW_01', 'trk2SE_11', 'trk2NE_10', 'trk2NW_00'],
+    'Trk2SW_10': ['trk2SW_10', 'trk2SE_00', 'trk2NE_01', 'trk2NW_11'],
+    'Trk2SW_11': ['trk2SW_11', 'trk2SE_10', 'trk2NE_00', 'trk2NW_01'],
+
+    'Trk2SE_00': ['trk2SE_00', 'trk2NE_01', 'trk2NW_11', 'trk2SW_10'],
+    'Trk2SE_01': ['trk2SE_01', 'trk2NE_11', 'trk2NW_10', 'trk2SW_00'],
+    'Trk2SE_10': ['trk2SE_10', 'trk2NE_00', 'trk2NW_01', 'trk2SW_11'],
+    'Trk2SE_11': ['trk2SE_11', 'trk2NE_10', 'trk2NW_00', 'trk2SW_01'],
+}
+
+SPRITES = {
+    'lok': [f'lok{i:02d}' for i in range(24)]
 }
 
 tiles = [  # S -----> N       W v E
     [[('Grass', -2), ('CliffW', -2), ('CliffS', -2)],   [('Grass', 0), ('CliffS', 0), ('CliffW', 0)],   [('Grass', 0), ('CliffW', 0)],   [('Grass', 0), ('CliffW', 0)],   [('Grass', 0), ('CliffW', 0)],   [('Grass', 0), ('CliffW', 0), ('CliffN', 0)],   ],
-    [[('Grass', 0), ('CliffW', 0), ('CliffS', 0)],   [('Grass', 0)],   [('Grass', 0)],   [('Grass', 0)],   [('Grass', 0)],   [('GrassW', 1), ('CliffN_W', 1), ('CliffS_W', 1)],   ],
-    [[('Grass', 0), ('CliffS', 0)],   [('GrassSW', 0)], [('GrassW', 1), ('CliffN_W', 1)],  [('Grass', 0)],   [('Grass', 0)],   [('GrassW', 3), ('CliffN_W', 3), ('CliffS_W', 3)],   ],
-    [[('Grass', 0), ('CliffS', 0)],   [('GrassS', 1)],  [('Grass', 2), ('CliffN', 2)],   [('GrassW', 1)],  [('GrassNW', 0)], [('GrassW', 5), ('CliffN_W', 5), ('CliffS_W', 5)],   ],
-    [[('Grass', 0), ('CliffS', 0)],   [('GrassS', 1)],  [('Grass', 2)],   [('Grass', 2)],   [('GrassN', 1)],  [('Grass', 6), ('CliffN', 6), ('CliffS', 6), ('CliffS', 2)],   ],
-    [[('Grass', 0), ('CliffS', 0)],   [('GrassSE', 0)], [('GrassE', 1)],  [('GrassE', 1)],  [('GrassNE', 0)], [('GrassE', 5), ('CliffN_E', 5), ('CliffS_E', 5)],   ],
-    [[('Grass', 0), ('CliffS', 0)],   [('Grass', 0)],   [('Grass', 0)],   [('Grass', 0)],   [('Grass', 0)],   [('GrassE', 3), ('CliffN_E', 3), ('CliffS_E', 3)],   ],
-    [[('Grass', 0), ('CliffS', 0), ('CliffE', 0)],   [('Grass', 0), ('CliffE', 0)],   [('Grass', 0), ('CliffE', 0)],   [('Grass', 0), ('CliffE', 0)],   [('Grass', 0), ('CliffE', 0)],   [('GrassE', 1), ('CliffE', 0), ('CliffN_E', 1), ('CliffS_E', 1)],   ],
+    [[('Grass', 0), ('CliffW', 0), ('CliffS', 0), ('Trk2NE_00', 0)],   [('Grass', 0), ('Trk2NE_10', 0)],   [('Grass', 0), ('TrkNS', 0)],   [('Grass', 0), ('Trk2SE_00', 0)],   [('Grass', 0), ('Trk2SE_10', 0)],   [('GrassW', 1), ('CliffN_W', 1), ('CliffS_W', 1)],   ],
+    [[('Grass', 0), ('CliffS', 0), ('Trk2NE_01', 0)],   [('GrassSW', 0), ('Trk2NE_11', 0)], [('GrassW', 1), ('CliffN_W', 1)],  [('Grass', 0), ('Trk2SE_01', 0)],   [('Grass', 0), ('Trk2SE_11', 0)],   [('GrassW', 3), ('CliffN_W', 3), ('CliffS_W', 3)],   ],
+    [[('Grass', 0), ('CliffS', 0), ('TrkEW', 0)],   [('GrassS', 1)],  [('Grass', 2), ('CliffN', 2)],   [('GrassW', 1)],  [('GrassNW', 0), ('TrkEW', 0)], [('GrassW', 5), ('CliffN_W', 5), ('CliffS_W', 5)],   ],
+    [[('Grass', 0), ('CliffS', 0), ('TrkEW', 0)],   [('GrassS', 1)],  [('Grass', 2)],   [('Grass', 2)],   [('GrassN', 1), ('TrkEW', 0)],  [('Grass', 6), ('CliffN', 6), ('CliffS', 6), ('CliffS', 2)],   ],
+    [[('Grass', 0), ('CliffS', 0), ('TrkEW', 0)],   [('GrassSE', 0)], [('GrassE', 1)],  [('GrassE', 1)],  [('GrassNE', 0), ('TrkEW', 0)], [('GrassE', 5), ('CliffN_E', 5), ('CliffS_E', 5)],   ],
+    [[('Grass', 0), ('CliffS', 0), ('Trk2NW_00', 0)],   [('Grass', 0), ('Trk2NW_10', 0)],   [('Grass', 0)],   [('Grass', 0), ('Trk2SW_00', 0)],   [('Grass', 0), ('Trk2SW_10', 0)],   [('GrassE', 3), ('CliffN_E', 3), ('CliffS_E', 3)],   ],
+    [[('Grass', 0), ('CliffS', 0), ('CliffE', 0), ('Trk2NW_01', 0)],   [('Grass', 0), ('CliffE', 0), ('Trk2NW_11', 0)],   [('Grass', 0), ('CliffE', 0), ('TrkNS', 0)],   [('Grass', 0), ('CliffE', 0), ('Trk2SW_01', 0)],   [('Grass', 0), ('CliffE', 0), ('Trk2SW_11', 0)],   [('GrassE', 1), ('CliffE', 0), ('CliffN_E', 1), ('CliffS_E', 1)],   ],
+]
+
+@dataclass
+class Sprite:
+    stype: str
+    east: float
+    north: float
+    z: float
+    rot: float
+
+    def get_image(self, view_rot):
+        sheet = SPRITES[self.stype]
+        n = len(sheet)
+        k = int(self.rot * n / (2 * math.pi) + view_rot * n/4 + 0.5) % n
+        return sheet[k]
+
+
+TRACK_PIECES = [
+    ('WE', 1, lambda s: (s, 0.5)),
+    ('2WN', math.pi * 0.75, lambda s: (s, 0.5)),
+]
+
+
+sprites = [
+    Sprite('lok', 3.5, 0.5, 0, 0)
 ]
 
 MAP_SIZE_NS = 6
@@ -133,6 +214,9 @@ def load_assets():
             source_surfs[fname] = src
         images[name] = (src.subsurface(pygame.Rect(sx, sy, sw, sh)), dx, dy)
 
+def update(dt):
+    sprites[0].rot += math.pi/4*dt
+
 def blits(view: View, sel_pos):
     if sel_pos is not None:
         sel_x, sel_y = sel_pos
@@ -164,6 +248,25 @@ def blits(view: View, sel_pos):
                         # not completely transparent
                         selected_blit = (surf, x, y)
                 yield surf, (x, y)
+            # use some kind of index in order only to select sprites on the tile
+            for sprite in sprites:
+                us, vs = view.uv_from_en(sprite.east, sprite.north)
+                if u-1 <= us < u and v-1 <= vs < v:
+                    rot_tile = sprite.get_image(view.angle)
+                    if not rot_tile:
+                        continue
+                    surf, dx, dy = images[rot_tile]
+                    x = int(view.x_offset + TILE_WIDTH * (vs-us) - dx)
+                    y = int(view.y_offset + TILE_WIDTH * (us+vs)//2 - sprite.z*Z_OFFSET - dy)
+
+                    sw, sh = surf.get_size()
+                    if sel_pos is not None and x <= sel_x < x+sw and y <= sel_y < y+sh:
+                        pixel = surf.get_at((sel_x - x, sel_y - y))
+                        if pixel[3]:
+                            # not completely transparent
+                            selected_blit = (surf, x, y)
+                    yield surf, (x, y)
+
     if selected_blit:
         surf, x, y = selected_blit
         ghost = surf.copy()
