@@ -1,5 +1,6 @@
 import math
 from dataclasses import dataclass
+from collections import defaultdict
 import pygame
 
 TILE_WIDTH = 64
@@ -266,6 +267,12 @@ def blits(view: View, sel_pos):
     else:
         sel_x = sel_y = -1
 
+    prep_sprites = defaultdict(list)
+    for sprite in sprites:
+        u, v = view.uv_from_en(sprite.east, sprite.north)
+        #du, dv = frontuv(sprite.rot)
+        prep_sprites[int(u), int(v)].append(sprite)
+
     selected_blit = None
     if view.angle == VIEW_FROM_SW or view.angle == VIEW_FROM_NE:
         U = MAP_SIZE_EW
@@ -292,23 +299,22 @@ def blits(view: View, sel_pos):
                         selected_blit = (surf, x, y)
                 yield surf, (x, y)
             # use some kind of index in order only to select sprites on the tile
-            for sprite in sprites:
-                if int(e) <= sprite.east < int(e)+1 and int(n) <= sprite.north < int(n)+1:
-                    rot_tile = sprite.get_image(view.angle)
-                    if not rot_tile:
-                        continue
-                    us, vs = view.uv_from_en(sprite.east, sprite.north)
-                    surf, dx, dy = images[rot_tile]
-                    x = int(view.x_offset + TILE_WIDTH * (vs-us) - dx)
-                    y = int(view.y_offset + TILE_WIDTH * (us+vs)//2 - sprite.z*Z_OFFSET - dy)
+            for sprite in prep_sprites[u,v]:
+                rot_tile = sprite.get_image(view.angle)
+                if not rot_tile:
+                    continue
+                us, vs = view.uv_from_en(sprite.east, sprite.north)
+                surf, dx, dy = images[rot_tile]
+                x = int(view.x_offset + TILE_WIDTH * (vs-us) - dx)
+                y = int(view.y_offset + TILE_WIDTH * (us+vs)//2 - sprite.z*Z_OFFSET - dy)
 
-                    sw, sh = surf.get_size()
-                    if sel_pos is not None and x <= sel_x < x+sw and y <= sel_y < y+sh:
-                        pixel = surf.get_at((sel_x - x, sel_y - y))
-                        if pixel[3]:
-                            # not completely transparent
-                            selected_blit = (surf, x, y)
-                    yield surf, (x, y)
+                sw, sh = surf.get_size()
+                if sel_pos is not None and x <= sel_x < x+sw and y <= sel_y < y+sh:
+                    pixel = surf.get_at((sel_x - x, sel_y - y))
+                    if pixel[3]:
+                        # not completely transparent
+                        selected_blit = (surf, x, y)
+                yield surf, (x, y)
 
     if selected_blit:
         surf, x, y = selected_blit
