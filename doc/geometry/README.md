@@ -41,5 +41,26 @@ There are three coordinate systems used:
 
 The image below illustrates the relationship of the coordinate systems in two different view orientations.
 
-!(Coordinate Systems)[CoordinateSystems.png]
+![Coordinate Systems](CoordinateSystems.png)
+
+### Map to View Coordinates
+
+The link between u,v and e,n depends on the view as shown in the following table. z is the same in both systems.
+    
+    VIEW_SW            VIEW_NW            VIEW_NE            VIEW_SE
+    ===============    ===============    ===============    ===============
+    u = SIZE_EW - e    u = n              u = e              u = SIZE_NS - n
+    v = SIZE_NS - n    v = SIZE_EW - e    v = n              v = e
+ 
+where `SIZE_EW`is the size of the map in east-west direction and `SIZE_NS` in north-south direction.
+ 
+### View to Screen Coordinates
+
+The scale of the tiles is given by its half width in pixels `TILE_HALF_WIDTH = 64` and the step size in z direction `Z_OFFSET = 16`.
+The location, where the map is drawn (scrolling) is determined by an offset (the position of the point B in the images above)
+
+    x = x_offset + TILE_HALF_WIDTH * (v - u)
+    y = y_offset + TILE_HALF_WIDTH * (u + v) / 2 - Z_OFFSET * z
+
+
 
