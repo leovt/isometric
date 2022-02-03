@@ -112,6 +112,22 @@ SPRITES = {
     'lok': [f'lok{i:02d}' for i in range(24)]
 }
 
+def frontuv(phi):
+    #only for this particular sprite
+    phi %= math.pi
+    if phi < math.pi/4 - 0.1:
+        return (0.625*math.cos(phi) - 0.3*math.sin(phi), 0.625*math.sin(phi) + 0.3*math.cos(phi))
+    elif phi < math.pi/4 + 0.1:
+        return (0.625*0.5**0.5,)*2
+    elif phi < 3*math.pi/4 - 0.1:
+        return (0.625*math.cos(phi) + 0.3*math.sin(phi), 0.625*math.sin(phi) - 0.3*math.cos(phi))
+    elif phi < 3*math.pi/4 + 0.1:
+        return (0.3*0.5**0.5,)*2
+    else:
+        return (-0.625*math.cos(phi) + 0.3*math.sin(phi), -0.625*math.sin(phi) - 0.3*math.cos(phi))
+
+
+
 tiles = [  # S -----> N       W v E
     [[('Grass', -2), ('CliffW', -2), ('CliffS', -2)],   [('Grass', 0), ('CliffS', 0), ('CliffW', 0)],   [('Grass', 0), ('CliffW', 0)],   [('Grass', 0), ('CliffW', 0)],   [('Grass', 0), ('CliffW', 0)],   [('Grass', 0), ('CliffW', 0), ('CliffN', 0)],   ],
     [[('Grass', 0), ('CliffW', 0), ('CliffS', 0), ('Trk2NE_00', 0)],   [('Grass', 0), ('Trk2NE_10', 0)],   [('Grass', 0), ('TrkNS', 0)],   [('Grass', 0), ('Trk2SE_00', 0)],   [('Grass', 0), ('Trk2SE_10', 0)],   [('GrassW', 1), ('CliffN_W', 1), ('CliffS_W', 1)],   ],
@@ -270,7 +286,11 @@ def blits(view: View, sel_pos):
     prep_sprites = defaultdict(list)
     for sprite in sprites:
         u, v = view.uv_from_en(sprite.east, sprite.north)
-        #du, dv = frontuv(sprite.rot)
+        du, dv = frontuv(sprite.rot)
+        prep_sprites[int(u), int(v)].append(sprite)
+        u += du
+        v += dv
+        # todo: add sprite to all tiles where it touches!
         prep_sprites[int(u), int(v)].append(sprite)
 
     selected_blit = None
@@ -282,6 +302,12 @@ def blits(view: View, sel_pos):
         V = MAP_SIZE_EW
     for u in range(U):
         for v in range(V):
+            x_min = view.x_offset + TILE_WIDTH * (v-u-1)
+            x_max = view.x_offset + TILE_WIDTH * (v-u+1)
+
+            check_selection = sel_pos is not None and x_min <= sel_x < x_max
+
+
             e,n = view.en_from_uv(u+0.5, v+0.5)
             for tile, h in tiles[int(e)][int(n)]:
                 rot_tile = TILES[tile][view.angle]
@@ -292,14 +318,14 @@ def blits(view: View, sel_pos):
                 y = view.y_offset + TILE_WIDTH * (u+v+1)//2 - h*Z_OFFSET - dy  #+1 because the tile is actually at u+0.5, v+0.5
 
                 sw, sh = surf.get_size()
-                if sel_pos is not None and x <= sel_x < x+sw and y <= sel_y < y+sh:
+                if check_selection and x <= sel_x < x+sw and y <= sel_y < y+sh:
                     pixel = surf.get_at((sel_x - x, sel_y - y))
                     if pixel[3]:
                         # not completely transparent
-                        selected_blit = (surf, x, y)
+                        selected_blit = (surf, x, y, u, v)
                 yield surf, (x, y)
             # use some kind of index in order only to select sprites on the tile
-            for sprite in prep_sprites[u,v]:
+            for sprite in sprites: #prep_sprites[u,v]:
                 rot_tile = sprite.get_image(view.angle)
                 if not rot_tile:
                     continue
@@ -307,17 +333,25 @@ def blits(view: View, sel_pos):
                 surf, dx, dy = images[rot_tile]
                 x = int(view.x_offset + TILE_WIDTH * (vs-us) - dx)
                 y = int(view.y_offset + TILE_WIDTH * (us+vs)//2 - sprite.z*Z_OFFSET - dy)
-
                 sw, sh = surf.get_size()
-                if sel_pos is not None and x <= sel_x < x+sw and y <= sel_y < y+sh:
+
+                if x < x_min or x+sw >= x_max:
+                    x0 = max(x, x_min)
+                    x1 = min(x+sw, x_max)
+                    r = pygame.Rect(x0-x, 0, x1-x0, sh)
+                    surf = surf.subsurface(r)
+                    x = x0
+                    sw, sh = surf.get_size()
+
+                if check_selection and x <= sel_x < x+sw and y <= sel_y < y+sh:
                     pixel = surf.get_at((sel_x - x, sel_y - y))
                     if pixel[3]:
                         # not completely transparent
-                        selected_blit = (surf, x, y)
+                        selected_blit = (surf, x, y, u, v)
                 yield surf, (x, y)
 
     if selected_blit:
-        surf, x, y = selected_blit
+        surf, x, y, u, v = selected_blit
         ghost = surf.copy()
         ghost.fill((128,128,128,128), special_flags=pygame.BLEND_RGBA_MULT)
         ghost.fill((192,192,192), special_flags=pygame.BLEND_ADD)
