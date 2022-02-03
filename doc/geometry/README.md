@@ -39,7 +39,8 @@ There are three coordinate systems used:
 *  **The screen coordinate system (x,y)** The unit is pixels. As usual the x coordinate runs from the left to the right and y runs from top to bottom. 
    The value 0 corresponds to the left or top edge of the screen (or window). The center of the top left pixel thus has the coordinates (0.5px, 0.5px).
 
-The image below illustrates the relationship of the coordinate systems in two different view orientations.
+The image below illustrates the relationship of the coordinate systems in two different view orientations. 
+Point A has coordinates (e=0, n=0, z=0) and point B has coordinates (u=0, v=0, z=0)
 
 ![Coordinate Systems](CoordinateSystems.png)
 
