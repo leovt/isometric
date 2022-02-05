@@ -67,9 +67,9 @@ def main():
                     view.y_offset += event.pos[1] - drag_start_coord[1]
                     drag_start_coord = event.pos
 
+        dt = 0.001 * clock.tick(FPS)
         if do_update:
-            update(1/FPS)
-        clock.tick(FPS)
+            update(dt)
 
 if __name__ == '__main__':
     main()
