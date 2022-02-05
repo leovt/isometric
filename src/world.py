@@ -131,31 +131,15 @@ SPRITES = {
     'lok': [f'lok{i:02d}' for i in range(24)]
 }
 
-def frontuv(phi):
-    #only for this particular sprite
-    phi %= math.pi
-    if phi < math.pi/4 - 0.1:
-        return (0.625*math.cos(phi) - 0.3*math.sin(phi), 0.625*math.sin(phi) + 0.3*math.cos(phi))
-    elif phi < math.pi/4 + 0.1:
-        return (0.625*0.5**0.5,)*2
-    elif phi < 3*math.pi/4 - 0.1:
-        return (0.625*math.cos(phi) + 0.3*math.sin(phi), 0.625*math.sin(phi) - 0.3*math.cos(phi))
-    elif phi < 3*math.pi/4 + 0.1:
-        return (0.3*0.5**0.5,)*2
-    else:
-        return (-0.625*math.cos(phi) + 0.3*math.sin(phi), -0.625*math.sin(phi) - 0.3*math.cos(phi))
-
-
-
 tiles = [  # S -----> N       W v E
     [[('Grass', -2), ('CliffW', -2), ('CliffS', -2)],   [('Grass', 0), ('CliffS', 0), ('CliffW', 0)],   [('Grass', 0), ('CliffW', 0)],   [('Grass', 0), ('CliffW', 0)],   [('Grass', 0), ('CliffW', 0)],   [('Grass', 0), ('CliffW', 0), ('CliffN', 0)],   ],
-    [[('Grass', 0), ('CliffW', 0), ('CliffS', 0), ('Trk2NE_00', 0)],   [('Grass', 0), ('Trk2NE_10', 0)],   [('Grass', 0), ('TrkNS', 0)],   [('Grass', 0), ('Trk2SE_00', 0)],   [('Grass', 0), ('Trk2SE_10', 0)],   [('GrassW', 1), ('CliffN_W', 1), ('CliffS_W', 1)],   ],
-    [[('Grass', 0), ('CliffS', 0), ('Trk2NE_01', 0)],   [('GrassSW', 0), ('Trk2NE_11', 0)], [('GrassW', 1), ('CliffN_W', 1)],  [('Grass', 0), ('Trk2SE_01', 0)],   [('Grass', 0), ('Trk2SE_11', 0)],   [('GrassW', 3), ('CliffN_W', 3), ('CliffS_W', 3)],   ],
-    [[('Grass', 0), ('CliffS', 0), ('TrkEW', 0)],   [('GrassS', 1)],  [('Grass', 2), ('CliffN', 2)],   [('GrassW', 1)],  [('Grass', 0), ('TrkEW', 0)], [('GrassW', 5), ('CliffN_W', 5), ('CliffS_W', 5)],   ],
-    [[('Grass', 0), ('CliffS', 0), ('TrkEW', 0)],   [('GrassS', 1)],  [('Grass', 2)],   [('Grass', 2), ('CliffE', 2)],   [('Grass', 0), ('TrkEW', 0)],  [('Grass', 6), ('CliffN', 6), ('CliffS', 6), ('CliffS', 2)],   ],
-    [[('Grass', 0), ('CliffS', 0), ('TrkEW', 0)],   [('GrassSE', 0)], [('GrassE', 1)],  [('GrassE', 1), ('CliffE_S', 1)],  [('Grass', 0), ('TrkEW', 0)], [('GrassE', 5), ('CliffN_E', 5), ('CliffS_E', 5)],   ],
-    [[('Grass', 0), ('CliffS', 0), ('Trk2NW_00', 0)],   [('Grass', 0), ('Trk2NW_10', 0)],   [('Grass', 4), ('CliffN', 4), ('CliffS', 4), ('CliffW', 4), ('CliffE', 4), ('TrkNS', 4)],   [('Grass', 0), ('Trk2SW_00', 0), ('TrkNS', 4)],   [('Grass', 0), ('Trk2SW_10', 0), ('TrkNS', 4)],   [('GrassE', 3), ('CliffN_E', 3), ('CliffS_E', 3), ('TrkNS', 4)],   ],
-    [[('Grass', 0), ('CliffS', 0), ('CliffE', 0), ('Trk2NW_01', 0)],   [('Grass', 0), ('CliffE', 0), ('Trk2NW_11', 0)],   [('Grass', 0), ('CliffE', 0), ('TrkNS', 0)],   [('Grass', 0), ('CliffE', 0), ('Trk2SW_01', 0)],   [('Grass', 0), ('CliffE', 0), ('Trk2SW_11', 0)],   [('GrassE', 1), ('CliffE', 0), ('CliffN_E', 1), ('CliffS_E', 1)],   ],
+    [[('Grass', 0), ('CliffW', 0), ('CliffS', 0), ('Trk2NE_00', 0, 11)],   [('Grass', 0), ('Trk2NE_10', 0, 11)],   [('Grass', 0), ('TrkNS', 0, 10)],   [('Grass', 0), ('Trk2SE_00', 0, 9)],   [('Grass', 0), ('Trk2SE_10', 0, 9)],   [('GrassW', 1), ('CliffN_W', 1), ('CliffS_W', 1)],   ],
+    [[('Grass', 0), ('CliffS', 0), ('Trk2NE_01', 0, 11)],   [('GrassSW', 0), ('Trk2NE_11', 0, 11)], [('GrassW', 1), ('CliffN_W', 1)],  [('Grass', 0), ('Trk2SE_01', 0, 9)],   [('Grass', 0), ('Trk2SE_11', 0, 9)],   [('GrassW', 3), ('CliffN_W', 3), ('CliffS_W', 3)],   ],
+    [[('Grass', 0), ('CliffS', 0), ('TrkEW', 0, 0)],   [('GrassS', 1)],  [('Grass', 2), ('CliffN', 2)],   [('GrassW', 1)],  [('Grass', 0), ('TrkEW', 0, 8)], [('GrassW', 5), ('CliffN_W', 5), ('CliffS_W', 5)],   ],
+    [[('Grass', 0), ('CliffS', 0), ('TrkEW', 0, 1)],   [('GrassS', 1)],  [('Grass', 2)],   [('Grass', 2), ('CliffE', 2)],   [('Grass', 0), ('TrkEW', 0, 7)],  [('Grass', 6), ('CliffN', 6), ('CliffS', 6), ('CliffS', 2)],   ],
+    [[('Grass', 0), ('CliffS', 0), ('TrkEW', 0, 2)],   [('GrassSE', 0)], [('GrassE', 1)],  [('GrassE', 1), ('CliffE_S', 1)],  [('Grass', 0), ('TrkEW', 0, 6)], [('GrassE', 5), ('CliffN_E', 5), ('CliffS_E', 5)],   ],
+    [[('Grass', 0), ('CliffS', 0), ('Trk2NW_00', 0, 3)],   [('Grass', 0), ('Trk2NW_10', 0, 3)],   [('Grass', 4), ('CliffN', 4), ('CliffS', 4), ('CliffW', 4), ('CliffE', 4), ('TrkNS', 4)],   [('Grass', 0), ('Trk2SW_00', 0, 5), ('TrkNS', 4)],   [('Grass', 0), ('Trk2SW_10', 0, 5), ('TrkNS', 4)],   [('GrassE', 3), ('CliffN_E', 3), ('CliffS_E', 3), ('TrkNS', 4)],   ],
+    [[('Grass', 0), ('CliffS', 0), ('CliffE', 0), ('Trk2NW_01', 0, 3)],   [('Grass', 0), ('CliffE', 0), ('Trk2NW_11', 0, 3)],   [('Grass', 0), ('CliffE', 0), ('TrkNS', 0, 4)],   [('Grass', 0), ('CliffE', 0), ('Trk2SW_01', 0, 5)],   [('Grass', 0), ('CliffE', 0), ('Trk2SW_11', 0, 5)],   [('GrassE', 1), ('CliffE', 0), ('CliffN_E', 1), ('CliffS_E', 1)],   ],
 ]
 
 @dataclass
@@ -201,20 +185,21 @@ class Ride:
 ride = Ride()
 ride.name = 'Wild West Train'
 ride.track = [
-    (3.5, 0.5, 0, 'WE',  [(3,0,'Mask_1')]),
-    (4.5, 0.5, 0, 'WE',  [(4,0,'Mask_1')]),
-    (5.5, 0.5, 0, 'WE',  [(5,0,'Mask_1')]),
-    (7,   1,   0, '2WN', [(6,0,'Mask_1'), (7,0,'Mask_2NW'), (6,1,'Mask_4SE'), (7,1,'Mask_1')]),
-    (7.5, 2.5, 0, 'SN',  [(7,2,'Mask_1')]),
-    (7,   4,   0, '2SW', [(7,3,'Mask_1'), (7,4,'Mask_2SW'), (6,3,'Mask_4NE'), (6,4,'Mask_1')]),
-    (5.5, 4.5, 0, 'EW',  [(5,4,'Mask_1')]),
-    (4.5, 4.5, 0, 'EW',  [(4,4,'Mask_1')]),
-    (3.5, 4.5, 0, 'EW',  [(3,4,'Mask_1')]),
-    (2,   4,   0, '2ES', [(2,4,'Mask_1'), (1,4,'Mask_2SE'), (2,3,'Mask_4NW'), (1,3,'Mask_1')]),
-    (1.5, 2.5, 0, 'NS',  [(1,2,'Mask_1')]),
-    (2,   1,   0, '2NE', [(1,1,'Mask_1'), (1,0,'Mask_2NE'), (2,1,'Mask_4SW'), (2,0,'Mask_1')]),
+    (3.5, 0.5, 0, 'WE',  [(3,0,'TrkEW','Mask_1')]),
+    (4.5, 0.5, 0, 'WE',  [(4,0,'TrkEW','Mask_1')]),
+    (5.5, 0.5, 0, 'WE',  [(5,0,'TrkEW','Mask_1')]),
+    (7,   1,   0, '2WN', [(6,0,'Trk2NW_00', 'Mask_1'), (7,0,'Trk2NW_01', 'Mask_2NW'), (6,1,'Trk2NW_10', 'Mask_4SE'), (7,1,'Trk2NW_11', 'Mask_1')]),
+    (7.5, 2.5, 0, 'SN',  [(7,2,'TrkNS','Mask_1')]),
+    (7,   4,   0, '2SW', [(7,3,'Trk2SW_01', 'Mask_1'), (7,4,'Trk2SW_11', 'Mask_2SW'), (6,3,'Trk2SW_00', 'Mask_4NE'), (6,4,'Trk2SW_10', 'Mask_1')]),
+    (5.5, 4.5, 0, 'EW',  [(5,4,'TrkEW','Mask_1')]),
+    (4.5, 4.5, 0, 'EW',  [(4,4,'TrkEW','Mask_1')]),
+    (3.5, 4.5, 0, 'EW',  [(3,4,'TrkEW','Mask_1')]),
+    (2,   4,   0, '2ES', [(2,4,'Trk2SE_11', 'Mask_1'), (1,4,'Trk2SE_10', 'Mask_2SE'), (2,3,'Trk2SE_01', 'Mask_4NW'), (1,3,'Trk2SE_00', 'Mask_1')]),
+    (1.5, 2.5, 0, 'NS',  [(1,2,'TrkNS','Mask_1')]),
+    (2,   1,   0, '2NE', [(1,1,'Trk2NE_10', 'Mask_1'), (1,0,'Trk2NE_00', 'Mask_2NE'), (2,1,'Trk2NE_11', 'Mask_4SW'), (2,0,'Trk2NE_01', 'Mask_1')]),
 ]
 ride.cars = [car]
+ride.cars_on_track = [set() for _ in ride.track]
 car.ride = ride
 car.sprite = Sprite('lok', 3.5, 0.5, 0, 0)
 
@@ -302,19 +287,52 @@ def update(dt):
 
     car.sprite.east, car.sprite.north, car.sprite.rot = e,n,r
 
+
+def masked_blit(src, x, y, mask, xm, ym):
+    '''create a masked version of the source and return a blitting spec'''
+    src_w, src_h = src.get_size()
+    tmp = mask.copy()
+    tmp.blit(src, (x-xm, y-ym), special_flags=pygame.BLEND_RGBA_MULT)
+    tmp_w, tmp_h = tmp.get_size()
+    tmp_rect = pygame.Rect(0, 0, tmp_w, tmp_h)
+    src_rect = tmp_rect.clip(pygame.Rect(x - xm, y - ym, src_w, src_h))
+    if src_rect.width and src_rect.height:
+        return tmp.subsurface(src_rect), (xm + src_rect.left, ym + src_rect.top)
+
+class Selector:
+    def __init__(self, sel_pos):
+        self.x = sel_pos[0]
+        self.y = sel_pos[1]
+        self.selected = None
+
+    def check(self, surf, x, y):
+        sw, sh = surf.get_size()
+        if x <= self.x < x+sw and y <= self.y < y+sh:
+            pixel = surf.get_at((self.x - x, self.y - y))
+            if pixel[3]: # not completely transparent
+                self.selected = (surf, (x, y))
+
+    def ghost(self):
+        if self.selected:
+            surf, (x, y) = self.selected
+            ghost = surf.copy()
+            ghost.fill((128,128,128,128), special_flags=pygame.BLEND_RGBA_MULT)
+            ghost.fill((192,192,192), special_flags=pygame.BLEND_ADD)
+            yield ghost, (x, y)
+
+class DummySelector:
+    def check(self, surf, x, y):
+        pass
+    def ghost(self):
+        return []
+
+
 def blits(view: View, sel_pos):
     if sel_pos is not None:
-        sel_x, sel_y = sel_pos
+        selector = Selector(sel_pos)
     else:
-        sel_x = sel_y = -1
+        selector = DummySelector()
 
-    prep_sprites = defaultdict(list)
-    #for sprite in [car.sprite]:
-    for t in (-1, 0, 1):
-        for e,n,mask in car.ride.track[(car.track_index+t) % len(car.ride.track)][4]:
-            prep_sprites[e,n].append((car.sprite, mask))
-
-    selected_blit = None
     if view.angle == VIEW_FROM_SW or view.angle == VIEW_FROM_NE:
         U = MAP_SIZE_EW
         V = MAP_SIZE_NS
@@ -323,81 +341,55 @@ def blits(view: View, sel_pos):
         V = MAP_SIZE_EW
     for u in range(U):
         for v in range(V):
-            x_min = view.x_offset + TILE_HALF_WIDTH * (v-u-1)
-            x_max = view.x_offset + TILE_HALF_WIDTH * (v-u+1)
-
-            check_selection = sel_pos is not None and x_min <= sel_x < x_max
-
-
             e,n = view.en_from_uv(u+0.5, v+0.5)
-            for tile, h in tiles[int(e)][int(n)]:
-                rot_tile = TILES[tile][view.angle]
-                if not rot_tile:
-                    continue
-                surf, dx, dy = images[rot_tile]
-                x = view.x_offset + TILE_HALF_WIDTH * (v-u) - dx
-                y = view.y_offset + TILE_HALF_WIDTH * (u+v+1)//2 - h*Z_OFFSET - dy  #+1 because the tile is actually at u+0.5, v+0.5
+            for t in tiles[int(e)][int(n)]:
+                tile, h = t[0], t[1]
+                if not(tile.startswith('Trk') and h==0):
+                    rot_tile = TILES[tile][view.angle]
+                    if not rot_tile:
+                        continue
+                    surf, dx, dy = images[rot_tile]
+                    x = view.x_offset + TILE_HALF_WIDTH * (v-u) - dx
+                    y = view.y_offset + TILE_HALF_WIDTH * (u+v+1)//2 - h*Z_OFFSET - dy  #+1 because the tile is actually at u+0.5, v+0.5
 
-                sw, sh = surf.get_size()
-                if check_selection and x <= sel_x < x+sw and y <= sel_y < y+sh:
-                    pixel = surf.get_at((sel_x - x, sel_y - y))
-                    if pixel[3]:
-                        # not completely transparent
-                        selected_blit = (surf, x, y, u, v)
-                yield surf, (x, y)
-
-                if tile.startswith('Trk') and h==0: # replace with sentinel object for sprites
-                    for sprite, mask in prep_sprites[int(e),int(n)]:
-                        rot_tile = sprite.get_image(view.angle)
-                        if not rot_tile:
-                            continue
-                        us, vs = view.uv_from_en(sprite.east, sprite.north)
-                        surf, dx, dy = images[rot_tile]
-                        x = int(view.x_offset + TILE_HALF_WIDTH * (vs-us) - dx)
-                        y = int(view.y_offset + TILE_HALF_WIDTH * (us+vs)//2 - sprite.z*Z_OFFSET - dy)
-                        sw, sh = surf.get_size()
-
-                        # clip to mask for the given tile
-                        rot_mask = TILES[mask][view.angle]
-                        mask, dmx, dmy = images[rot_mask]
-                        xm = int(view.x_offset + TILE_HALF_WIDTH * (v-u) - dmx)
-                        ym = int(view.y_offset + TILE_HALF_WIDTH * (u+v+1)//2 - sprite.z*Z_OFFSET - dmy)
-                        sw, sh = surf.get_size()
-
-                        tmp = mask.copy()
-                        tmp.blit(surf, (x-xm, y-ym), special_flags=pygame.BLEND_RGBA_MULT)
-                        w, h = tmp.get_size()
-                        r1 = pygame.Rect(0,0,w,h)
-                        r = r1.clip(pygame.Rect(x-xm,y-ym,sw,sh))
-
-                        if r.width==0 or r.height==0:
-                            continue
-
-                        surf = tmp.subsurface(r)
-                        x = xm+r.left
-                        y = ym+r.top
-
-                    sw, sh = surf.get_size()
-                    if check_selection and x <= sel_x < x+sw and y <= sel_y < y+sh:
-                        pixel = surf.get_at((sel_x - x, sel_y - y))
-                        if pixel[3]:
-                            # not completely transparent
-                            selected_blit = (surf, x, y, u, v)
+                    selector.check(surf, x, y)
                     yield surf, (x, y)
-    if False: #force draw sprite on top for debugging
-        for sprite in sprites:
-            rot_tile = sprite.get_image(view.angle)
-            if not rot_tile:
-                continue
-            us, vs = view.uv_from_en(sprite.east, sprite.north)
-            surf, dx, dy = images[rot_tile]
-            x = int(view.x_offset + TILE_HALF_WIDTH * (vs-us) - dx)
-            y = int(view.y_offset + TILE_HALF_WIDTH * (us+vs)//2 - sprite.z*Z_OFFSET - dy)
-            yield surf, (x, y)
+                else:
+                    track_index = t[2]
+                    (_,_,h,_,pcs) = ride.track[track_index]
+                    for (ee,nn,tile,mask) in pcs:
+                        if ee == int(e) and nn==int(n):
+                            rot_tile = TILES[tile][view.angle]
+                            if not rot_tile:
+                                continue
+                            surf, dx, dy = images[rot_tile]
+                            x = view.x_offset + TILE_HALF_WIDTH * (v-u) - dx
+                            y = view.y_offset + TILE_HALF_WIDTH * (u+v+1)//2 - h*Z_OFFSET - dy  #+1 because the tile is actually at u+0.5, v+0.5
 
-    if selected_blit:
-        surf, x, y, u, v = selected_blit
-        ghost = surf.copy()
-        ghost.fill((128,128,128,128), special_flags=pygame.BLEND_RGBA_MULT)
-        ghost.fill((192,192,192), special_flags=pygame.BLEND_ADD)
-        yield ghost, (x, y)
+                            selector.check(surf, x, y)
+                            yield surf, (x, y)
+
+                            prep_sprites = []
+                            for car in ride.cars:
+                                if (car.track_index - track_index + 1) % len(ride.track) > 2:
+                                    continue
+                                rot_tile = car.sprite.get_image(view.angle)
+                                if not rot_tile:
+                                    continue
+                                us, vs = view.uv_from_en(car.sprite.east, car.sprite.north)
+                                surf, dx, dy = images[rot_tile]
+                                x = int(view.x_offset + TILE_HALF_WIDTH * (vs-us) - dx)
+                                y = int(view.y_offset + TILE_HALF_WIDTH * (us+vs)//2 - car.sprite.z*Z_OFFSET - dy)
+
+                                # clip to mask for the given tile
+                                rot_mask = TILES[mask][view.angle]
+                                mask, dmx, dmy = images[rot_mask]
+                                xm = int(view.x_offset + TILE_HALF_WIDTH * (v-u) - dmx)
+                                ym = int(view.y_offset + TILE_HALF_WIDTH * (u+v+1)//2 - h*Z_OFFSET - dmy)
+
+                                masked = masked_blit(surf, x, y, mask, xm, ym)
+                                if masked:
+                                    surf, (x, y) = masked
+                                    selector.check(surf, x, y)
+                                    yield surf, (x, y)
+    yield from selector.ghost()
