@@ -188,7 +188,19 @@ TRACK_PIECES = {
     '2NE': (math.pi * 0.75, lambda s: ( 1 - 1.5 * math.cos(s/1.5),  1 - 1.5 * math.sin(s/1.5), s/1.5 + math.pi * 1.5)),
 }
 
-track = [
+class Car:
+    pass
+
+car = Car()
+car.track_index = 0
+car.track_pos = 0
+
+class Ride:
+    pass
+
+ride = Ride()
+ride.name = 'Wild West Train'
+ride.track = [
     (3.5, 0.5, 0, 'WE',  [(3,0,'Mask_1')]),
     (4.5, 0.5, 0, 'WE',  [(4,0,'Mask_1')]),
     (5.5, 0.5, 0, 'WE',  [(5,0,'Mask_1')]),
@@ -202,51 +214,10 @@ track = [
     (1.5, 2.5, 0, 'NS',  [(1,2,'Mask_1')]),
     (2,   1,   0, '2NE', [(1,1,'Mask_1'), (1,0,'Mask_2NE'), (2,1,'Mask_4SW'), (2,0,'Mask_1')]),
 ]
+ride.cars = [car]
+car.ride = ride
+car.sprite = Sprite('lok', 3.5, 0.5, 0, 0)
 
-car_trk = 0
-car_s = 0
-
-def car_pos(s):
-    pi, sin, cos = math.pi, math.sin, math.cos
-
-    A = 3
-    B = 3 + 0.75*pi
-    C = 4 + 0.75*pi
-    D = 4 + 1.50*pi
-    E = 7 + 1.50*pi
-    F = 7 + 2.25*pi
-    G = 8 + 2.25*pi
-    L = 8 + 3.00*pi
-
-    s %= L
-
-    if 0 <= s < A:
-        return (3 + s, 0.5, 0)
-    elif A <= s < B:
-        phi = (s - A) / 1.5
-        return (6 + 1.5 * sin(phi), 2 - 1.5 * cos(phi), phi)
-    elif B <= s < C:
-        return (7.5, 2 + s - B, pi/2)
-    elif C <= s < D:
-        phi = (s - C) / 1.5 + pi/2
-        return (6 + 1.5 * sin(phi), 3 - 1.5 * cos(phi), phi)
-    elif D <= s < E:
-        return (6 - s + D, 4.5, pi)
-    elif E <= s < F:
-        phi = (s - E) / 1.5 + pi
-        return (3 + 1.5 * sin(phi), 3 - 1.5 * cos(phi), phi)
-    elif F <= s < G:
-        return (1.5, 3 - s + F, pi*1.5)
-    else:
-        phi = (s - G) / 1.5 + pi * 1.5
-        return (3 + 1.5 * sin(phi), 2 - 1.5 * cos(phi), phi)
-
-
-
-
-sprites = [
-    Sprite('lok', 3.5, 0.5, 0, 0)
-]
 
 MAP_SIZE_NS = 6
 MAP_SIZE_EW = 8
@@ -316,29 +287,20 @@ def load_assets():
         images[name] = (src.subsurface(pygame.Rect(sx, sy, sw, sh)), dx, dy)
 
 
-s = 0
-
 def update(dt):
-    global s
-    global car_trk
-    global car_s
+    car.track_pos += 2*dt
 
-    s += 2*dt
-    car_s += 2*dt
+    tp = TRACK_PIECES[car.ride.track[car.track_index][3]]
+    while car.track_pos > tp[0]:
+        car.track_pos -= tp[0]
+        car.track_index = (car.track_index + 1) % len(car.ride.track)
+        tp = TRACK_PIECES[car.ride.track[car.track_index][3]]
 
-    tp = TRACK_PIECES[track[car_trk][3]]
-    while car_s > tp[0]:
-        car_s -= tp[0]
-        car_trk = (car_trk + 1) % len(track)
-        tp = TRACK_PIECES[track[car_trk][3]]
+    e,n,r = tp[1](car.track_pos)
+    e += car.ride.track[car.track_index][0]
+    n += car.ride.track[car.track_index][1]
 
-    #print(car_trk, track[car_trk], tp[0], car_s)
-
-    e,n,r = tp[1](car_s)
-    e += track[car_trk][0]
-    n += track[car_trk][1]
-
-    sprites[0].east, sprites[0].north, sprites[0].rot = e,n,r
+    car.sprite.east, car.sprite.north, car.sprite.rot = e,n,r
 
 def blits(view: View, sel_pos):
     if sel_pos is not None:
@@ -347,23 +309,10 @@ def blits(view: View, sel_pos):
         sel_x = sel_y = -1
 
     prep_sprites = defaultdict(list)
-    for sprite in sprites:
-        for t in (-1,0,1):
-            for e,n,mask in track[(car_trk+t)%len(track)][4]:
-                prep_sprites[e,n].append((sprite, mask))
-
-        #print(list(prep_sprites.keys()))
-
-#        u, v = view.uv_from_en(sprite.east, sprite.north)
-#        du, dv = frontuv(sprite.rot)
-#        prep_sprites[int(u), int(v)].append(sprite)
-#        u += du
-#        v += dv
-        # todo: add sprite to all tiles where it touches!
-#        for ds in range(-10, 11):
-#            e,n,_ = car_pos(s+ds*0.075)
-#            u, v = view.uv_from_en(e,n)
-#            prep_sprites[int(u), int(v)].add(sprite)
+    #for sprite in [car.sprite]:
+    for t in (-1, 0, 1):
+        for e,n,mask in car.ride.track[(car.track_index+t) % len(car.ride.track)][4]:
+            prep_sprites[e,n].append((car.sprite, mask))
 
     selected_blit = None
     if view.angle == VIEW_FROM_SW or view.angle == VIEW_FROM_NE:
