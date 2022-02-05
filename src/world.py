@@ -52,7 +52,15 @@ IMAGES = {
     'trk2SW_10': ('art/models/track/0016.png', 64, 32, 0, 0, 128, 64),
     'trk2SW_11': ('art/models/track/0017.png', 64, 32, 0, 0, 128, 64),
 
-    'mask': ('art/spritemask.png', 64, 92, 0, 0, 128, 128),
+    'mask_1': ('art/spritemask.png', 64, 92, 0, 0, 128, 128),
+    'mask_2SW': ('art/spritemask.png', 64, 92, 1*128, 0, 128, 128),
+    'mask_2SE': ('art/spritemask.png', 64, 92, 2*128, 0, 128, 128),
+    'mask_2NE': ('art/spritemask.png', 64, 92, 3*128, 0, 128, 128),
+    'mask_2NW': ('art/spritemask.png', 64, 92, 4*128, 0, 128, 128),
+    'mask_4SW': ('art/spritemask.png', 64, 92, 5*128, 0, 128, 128),
+    'mask_4SE': ('art/spritemask.png', 64, 92, 6*128, 0, 128, 128),
+    'mask_4NE': ('art/spritemask.png', 64, 92, 7*128, 0, 128, 128),
+    'mask_4NW': ('art/spritemask.png', 64, 92, 8*128, 0, 128, 128),
     }
 for i in range(24):
     IMAGES[f'lok{i:02d}'] = (f'art/models/lok/{i:04d}.png', 192, 96, 0, 0, 384, 192)
@@ -68,6 +76,16 @@ TILES = {
     'GrassSE': ['hillSE', 'hillNE', 'hillNW', 'hillSW'],
     'GrassNE': ['hillNE', 'hillNW', 'hillSW', 'hillSE'],
     'GrassNW': ['hillNW', 'hillSW', 'hillSE', 'hillNE'],
+
+    'Mask_1': ['mask_1', 'mask_1', 'mask_1', 'mask_1'],
+    'Mask_2SW': ['mask_2SW', 'mask_2SE', 'mask_2NE', 'mask_2NW'],
+    'Mask_2SE': ['mask_2SE', 'mask_2NE', 'mask_2NW', 'mask_2SW'],
+    'Mask_2NE': ['mask_2NE', 'mask_2NW', 'mask_2SW', 'mask_2SE'],
+    'Mask_2NW': ['mask_2NW', 'mask_2SW', 'mask_2SE', 'mask_2NE'],
+    'Mask_4SW': ['mask_4SW', 'mask_4SE', 'mask_4NE', 'mask_4NW'],
+    'Mask_4SE': ['mask_4SE', 'mask_4NE', 'mask_4NW', 'mask_4SW'],
+    'Mask_4NE': ['mask_4NE', 'mask_4NW', 'mask_4SW', 'mask_4SE'],
+    'Mask_4NW': ['mask_4NW', 'mask_4SW', 'mask_4SE', 'mask_4NE'],
 
     'CliffW': ['cliffW', 'cliffS', None, None],
     'CliffS': ['cliffS', None, None, 'cliffW'],
@@ -158,11 +176,35 @@ class Sprite:
         return sheet[k]
 
 
-TRACK_PIECES = [
-    ('WE', 1, lambda s: (s, 0.5)),
-    ('2WN', math.pi * 0.75, lambda s: (s, 0.5)),
+TRACK_PIECES = {
+    'WE': (1, lambda s: (s-0.5, 0, 0)),
+    'SN': (1, lambda s: (0, s-0.5, math.pi * 0.5)),
+    'EW': (1, lambda s: (0.5-s, 0, math.pi)),
+    'NS': (1, lambda s: (0, 0.5-s, math.pi * 1.5)),
+
+    '2WN': (math.pi * 0.75, lambda s: (-1 + 1.5 * math.sin(s/1.5),  1 - 1.5 * math.cos(s/1.5), s/1.5)),
+    '2SW': (math.pi * 0.75, lambda s: (-1 + 1.5 * math.cos(s/1.5), -1 + 1.5 * math.sin(s/1.5), s/1.5 + math.pi * 0.5)),
+    '2ES': (math.pi * 0.75, lambda s: ( 1 - 1.5 * math.sin(s/1.5), -1 + 1.5 * math.cos(s/1.5), s/1.5 + math.pi)),
+    '2NE': (math.pi * 0.75, lambda s: ( 1 - 1.5 * math.cos(s/1.5),  1 - 1.5 * math.sin(s/1.5), s/1.5 + math.pi * 1.5)),
+}
+
+track = [
+    (3.5, 0.5, 0, 'WE',  [(3,0,'Mask_1')]),
+    (4.5, 0.5, 0, 'WE',  [(4,0,'Mask_1')]),
+    (5.5, 0.5, 0, 'WE',  [(5,0,'Mask_1')]),
+    (7,   1,   0, '2WN', [(6,0,'Mask_1'), (7,0,'Mask_2NW'), (6,1,'Mask_4SE'), (7,1,'Mask_1')]),
+    (7.5, 2.5, 0, 'SN',  [(7,2,'Mask_1')]),
+    (7,   4,   0, '2SW', [(7,3,'Mask_1'), (7,4,'Mask_2SW'), (6,3,'Mask_4NE'), (6,4,'Mask_1')]),
+    (5.5, 4.5, 0, 'EW',  [(5,4,'Mask_1')]),
+    (4.5, 4.5, 0, 'EW',  [(4,4,'Mask_1')]),
+    (3.5, 4.5, 0, 'EW',  [(3,4,'Mask_1')]),
+    (2,   4,   0, '2ES', [(2,4,'Mask_1'), (1,4,'Mask_2SE'), (2,3,'Mask_4NW'), (1,3,'Mask_1')]),
+    (1.5, 2.5, 0, 'NS',  [(1,2,'Mask_1')]),
+    (2,   1,   0, '2NE', [(1,1,'Mask_1'), (1,0,'Mask_2NE'), (2,1,'Mask_4SW'), (2,0,'Mask_1')]),
 ]
 
+car_trk = 0
+car_s = 0
 
 def car_pos(s):
     pi, sin, cos = math.pi, math.sin, math.cos
@@ -278,8 +320,25 @@ s = 0
 
 def update(dt):
     global s
+    global car_trk
+    global car_s
+
     s += 2*dt
-    sprites[0].east, sprites[0].north, sprites[0].rot = car_pos(s)
+    car_s += 2*dt
+
+    tp = TRACK_PIECES[track[car_trk][3]]
+    while car_s > tp[0]:
+        car_s -= tp[0]
+        car_trk = (car_trk + 1) % len(track)
+        tp = TRACK_PIECES[track[car_trk][3]]
+
+    #print(car_trk, track[car_trk], tp[0], car_s)
+
+    e,n,r = tp[1](car_s)
+    e += track[car_trk][0]
+    n += track[car_trk][1]
+
+    sprites[0].east, sprites[0].north, sprites[0].rot = e,n,r
 
 def blits(view: View, sel_pos):
     if sel_pos is not None:
@@ -287,18 +346,24 @@ def blits(view: View, sel_pos):
     else:
         sel_x = sel_y = -1
 
-    prep_sprites = defaultdict(set)
+    prep_sprites = defaultdict(list)
     for sprite in sprites:
+        for t in (-1,0,1):
+            for e,n,mask in track[(car_trk+t)%len(track)][4]:
+                prep_sprites[e,n].append((sprite, mask))
+
+        #print(list(prep_sprites.keys()))
+
 #        u, v = view.uv_from_en(sprite.east, sprite.north)
 #        du, dv = frontuv(sprite.rot)
 #        prep_sprites[int(u), int(v)].append(sprite)
 #        u += du
 #        v += dv
         # todo: add sprite to all tiles where it touches!
-        for ds in range(-10, 11):
-            e,n,_ = car_pos(s+ds*0.075)
-            u, v = view.uv_from_en(e,n)
-            prep_sprites[int(u), int(v)].add(sprite)
+#        for ds in range(-10, 11):
+#            e,n,_ = car_pos(s+ds*0.075)
+#            u, v = view.uv_from_en(e,n)
+#            prep_sprites[int(u), int(v)].add(sprite)
 
     selected_blit = None
     if view.angle == VIEW_FROM_SW or view.angle == VIEW_FROM_NE:
@@ -333,7 +398,7 @@ def blits(view: View, sel_pos):
                 yield surf, (x, y)
 
                 if tile.startswith('Trk') and h==0: # replace with sentinel object for sprites
-                    for sprite in prep_sprites[u,v]:
+                    for sprite, mask in prep_sprites[int(e),int(n)]:
                         rot_tile = sprite.get_image(view.angle)
                         if not rot_tile:
                             continue
@@ -343,33 +408,25 @@ def blits(view: View, sel_pos):
                         y = int(view.y_offset + TILE_HALF_WIDTH * (us+vs)//2 - sprite.z*Z_OFFSET - dy)
                         sw, sh = surf.get_size()
 
-                        if False:
-                            # clip to column of the tile
-                            if x < x_min or x+sw >= x_max:
-                                x0 = max(x, x_min)
-                                x1 = min(x+sw, x_max)
-                                r = pygame.Rect(x0-x, 0, x1-x0, sh)
-                                surf = surf.subsurface(r)
-                                x = x0
-                        else:
-                            # clip to mask for the given tile
-                            mask, dmx, dmy = images['mask']
-                            xm = int(view.x_offset + TILE_HALF_WIDTH * (v-u) - dmx)
-                            ym = int(view.y_offset + TILE_HALF_WIDTH * (u+v+1)//2 - sprite.z*Z_OFFSET - dmy)
-                            sw, sh = surf.get_size()
+                        # clip to mask for the given tile
+                        rot_mask = TILES[mask][view.angle]
+                        mask, dmx, dmy = images[rot_mask]
+                        xm = int(view.x_offset + TILE_HALF_WIDTH * (v-u) - dmx)
+                        ym = int(view.y_offset + TILE_HALF_WIDTH * (u+v+1)//2 - sprite.z*Z_OFFSET - dmy)
+                        sw, sh = surf.get_size()
 
-                            tmp = mask.copy()
-                            tmp.blit(surf, (x-xm, y-ym), special_flags=pygame.BLEND_RGBA_MULT)
-                            w, h = tmp.get_size()
-                            r1 = pygame.Rect(0,0,w,h)
-                            r = r1.clip(pygame.Rect(x-xm,y-ym,sw,sh))
+                        tmp = mask.copy()
+                        tmp.blit(surf, (x-xm, y-ym), special_flags=pygame.BLEND_RGBA_MULT)
+                        w, h = tmp.get_size()
+                        r1 = pygame.Rect(0,0,w,h)
+                        r = r1.clip(pygame.Rect(x-xm,y-ym,sw,sh))
 
-                            if r.width==0 or r.height==0:
-                                continue
+                        if r.width==0 or r.height==0:
+                            continue
 
-                            surf = tmp.subsurface(r)
-                            x = xm+r.left
-                            y = ym+r.top
+                        surf = tmp.subsurface(r)
+                        x = xm+r.left
+                        y = ym+r.top
 
                     sw, sh = surf.get_size()
                     if check_selection and x <= sel_x < x+sw and y <= sel_y < y+sh:
@@ -378,6 +435,16 @@ def blits(view: View, sel_pos):
                             # not completely transparent
                             selected_blit = (surf, x, y, u, v)
                     yield surf, (x, y)
+    if False: #force draw sprite on top for debugging
+        for sprite in sprites:
+            rot_tile = sprite.get_image(view.angle)
+            if not rot_tile:
+                continue
+            us, vs = view.uv_from_en(sprite.east, sprite.north)
+            surf, dx, dy = images[rot_tile]
+            x = int(view.x_offset + TILE_HALF_WIDTH * (vs-us) - dx)
+            y = int(view.y_offset + TILE_HALF_WIDTH * (us+vs)//2 - sprite.z*Z_OFFSET - dy)
+            yield surf, (x, y)
 
     if selected_blit:
         surf, x, y, u, v = selected_blit
