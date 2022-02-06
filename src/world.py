@@ -173,36 +173,68 @@ TRACK_PIECES = {
 }
 
 class Car:
-    pass
+    def __init__(self, ride, sprite):
+        self.track_element = ride.track[0]
+        self.track_pos = 0
+        self.ride = ride
+        self.sprite = sprite
+        self.update(0)
 
-car = Car()
-car.track_index = 0
-car.track_pos = 0
+    def update(self, dt):
+        self.track_pos += 2*dt
+
+        tp = TRACK_PIECES[self.track_element.track_piece]
+        while self.track_pos > tp[0]:
+            self.track_pos -= tp[0]
+            self.track_element = self.track_element.next
+            tp = TRACK_PIECES[self.track_element.track_piece]
+
+        e,n,r = tp[1](self.track_pos)
+        e += self.track_element.east
+        n += self.track_element.north
+
+        self.sprite.east, self.sprite.north, self.sprite.rot = e,n,r
+
+@dataclass
+class RideTrackElement:
+    ride: object
+    east: float
+    north: float
+    height: int
+    track_piece: str
+    subpieces: list
+    next: object=None
+    prev: object=None
 
 class Ride:
-    pass
+    def update(self, dt):
+        for car in self.cars:
+            car.update(dt)
 
 ride = Ride()
 ride.name = 'Wild West Train'
 ride.track = [
-    (3.5, 0.5, 0, 'WE',  [(3,0,'TrkEW','Mask_1')]),
-    (4.5, 0.5, 0, 'WE',  [(4,0,'TrkEW','Mask_1')]),
-    (5.5, 0.5, 0, 'WE',  [(5,0,'TrkEW','Mask_1')]),
-    (7,   1,   0, '2WN', [(6,0,'Trk2NW_00', 'Mask_1'), (7,0,'Trk2NW_01', 'Mask_2NW'), (6,1,'Trk2NW_10', 'Mask_4SE'), (7,1,'Trk2NW_11', 'Mask_1')]),
-    (7.5, 2.5, 0, 'SN',  [(7,2,'TrkNS','Mask_1')]),
-    (7,   4,   0, '2SW', [(7,3,'Trk2SW_01', 'Mask_1'), (7,4,'Trk2SW_11', 'Mask_2SW'), (6,3,'Trk2SW_00', 'Mask_4NE'), (6,4,'Trk2SW_10', 'Mask_1')]),
-    (5.5, 4.5, 0, 'EW',  [(5,4,'TrkEW','Mask_1')]),
-    (4.5, 4.5, 0, 'EW',  [(4,4,'TrkEW','Mask_1')]),
-    (3.5, 4.5, 0, 'EW',  [(3,4,'TrkEW','Mask_1')]),
-    (2,   4,   0, '2ES', [(2,4,'Trk2SE_11', 'Mask_1'), (1,4,'Trk2SE_10', 'Mask_2SE'), (2,3,'Trk2SE_01', 'Mask_4NW'), (1,3,'Trk2SE_00', 'Mask_1')]),
-    (1.5, 2.5, 0, 'NS',  [(1,2,'TrkNS','Mask_1')]),
-    (2,   1,   0, '2NE', [(1,1,'Trk2NE_10', 'Mask_1'), (1,0,'Trk2NE_00', 'Mask_2NE'), (2,1,'Trk2NE_11', 'Mask_4SW'), (2,0,'Trk2NE_01', 'Mask_1')]),
+    RideTrackElement(ride, 3.5, 0.5, 0, 'WE',  [(3,0,'TrkEW','Mask_1')]),
+    RideTrackElement(ride, 4.5, 0.5, 0, 'WE',  [(4,0,'TrkEW','Mask_1')]),
+    RideTrackElement(ride, 5.5, 0.5, 0, 'WE',  [(5,0,'TrkEW','Mask_1')]),
+    RideTrackElement(ride, 7,   1,   0, '2WN', [(6,0,'Trk2NW_00', 'Mask_1'), (7,0,'Trk2NW_01', 'Mask_2NW'), (6,1,'Trk2NW_10', 'Mask_4SE'), (7,1,'Trk2NW_11', 'Mask_1')]),
+    RideTrackElement(ride, 7.5, 2.5, 0, 'SN',  [(7,2,'TrkNS','Mask_1')]),
+    RideTrackElement(ride, 7,   4,   0, '2SW', [(7,3,'Trk2SW_01', 'Mask_1'), (7,4,'Trk2SW_11', 'Mask_2SW'), (6,3,'Trk2SW_00', 'Mask_4NE'), (6,4,'Trk2SW_10', 'Mask_1')]),
+    RideTrackElement(ride, 5.5, 4.5, 0, 'EW',  [(5,4,'TrkEW','Mask_1')]),
+    RideTrackElement(ride, 4.5, 4.5, 0, 'EW',  [(4,4,'TrkEW','Mask_1')]),
+    RideTrackElement(ride, 3.5, 4.5, 0, 'EW',  [(3,4,'TrkEW','Mask_1')]),
+    RideTrackElement(ride, 2,   4,   0, '2ES', [(2,4,'Trk2SE_11', 'Mask_1'), (1,4,'Trk2SE_10', 'Mask_2SE'), (2,3,'Trk2SE_01', 'Mask_4NW'), (1,3,'Trk2SE_00', 'Mask_1')]),
+    RideTrackElement(ride, 1.5, 2.5, 0, 'NS',  [(1,2,'TrkNS','Mask_1')]),
+    RideTrackElement(ride, 2,   1,   0, '2NE', [(1,1,'Trk2NE_10', 'Mask_1'), (1,0,'Trk2NE_00', 'Mask_2NE'), (2,1,'Trk2NE_11', 'Mask_4SW'), (2,0,'Trk2NE_01', 'Mask_1')]),
 ]
-ride.cars = [car]
-ride.cars_on_track = [set() for _ in ride.track]
-car.ride = ride
-car.sprite = Sprite('lok', 3.5, 0.5, 0, 0)
 
+for a,b in zip(ride.track, ride.track[1:] + ride.track[:1]):
+    a.next = b
+    b.prev = a
+
+
+ride.cars = [Car(ride, Sprite('lok', 3.5, 0.5, 0, 0))]
+ride.cars_on_track = [set() for _ in ride.track]
 
 MAP_SIZE_NS = 6
 MAP_SIZE_EW = 8
@@ -273,20 +305,7 @@ def load_assets():
 
 
 def update(dt):
-    car.track_pos += 2*dt
-
-    tp = TRACK_PIECES[car.ride.track[car.track_index][3]]
-    while car.track_pos > tp[0]:
-        car.track_pos -= tp[0]
-        car.track_index = (car.track_index + 1) % len(car.ride.track)
-        tp = TRACK_PIECES[car.ride.track[car.track_index][3]]
-
-    e,n,r = tp[1](car.track_pos)
-    e += car.ride.track[car.track_index][0]
-    n += car.ride.track[car.track_index][1]
-
-    car.sprite.east, car.sprite.north, car.sprite.rot = e,n,r
-
+    ride.update(dt)
 
 def masked_blit(src, x, y, mask, xm, ym):
     '''create a masked version of the source and return a blitting spec'''
@@ -356,22 +375,23 @@ def blits(view: View, sel_pos):
                     yield surf, (x, y)
                 else:
                     track_index = t[2]
-                    (_,_,h,_,pcs) = ride.track[track_index]
-                    for (ee,nn,tile,mask) in pcs:
+                    rtp = ride.track[track_index]
+                    for (ee,nn,tile,mask) in rtp.subpieces:
                         if ee == int(e) and nn==int(n):
                             rot_tile = TILES[tile][view.angle]
                             if not rot_tile:
                                 continue
                             surf, dx, dy = images[rot_tile]
                             x = view.x_offset + TILE_HALF_WIDTH * (v-u) - dx
-                            y = view.y_offset + TILE_HALF_WIDTH * (u+v+1)//2 - h*Z_OFFSET - dy  #+1 because the tile is actually at u+0.5, v+0.5
+                            y = view.y_offset + TILE_HALF_WIDTH * (u+v+1)//2 - rtp.height*Z_OFFSET - dy  #+1 because the tile is actually at u+0.5, v+0.5
 
                             selector.check(surf, x, y)
                             yield surf, (x, y)
 
                             prep_sprites = []
+                            element = ride.track[track_index]
                             for car in ride.cars:
-                                if (car.track_index - track_index + 1) % len(ride.track) > 2:
+                                if not (element is car.track_element or element is car.track_element.next or element is car.track_element.prev):
                                     continue
                                 rot_tile = car.sprite.get_image(view.angle)
                                 if not rot_tile:
