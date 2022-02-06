@@ -131,16 +131,6 @@ SPRITES = {
     'lok': [f'lok{i:02d}' for i in range(24)]
 }
 
-tiles = [  # S -----> N       W v E
-    [[('Grass', -2), ('CliffW', -2), ('CliffS', -2)],   [('Grass', 0), ('CliffS', 0), ('CliffW', 0)],   [('Grass', 0), ('CliffW', 0)],   [('Grass', 0), ('CliffW', 0)],   [('Grass', 0), ('CliffW', 0)],   [('Grass', 0), ('CliffW', 0), ('CliffN', 0)],   ],
-    [[('Grass', 0), ('CliffW', 0), ('CliffS', 0), ('Trk2NE_00', 0, 11)],   [('Grass', 0), ('Trk2NE_10', 0, 11)],   [('Grass', 0), ('TrkNS', 0, 10)],   [('Grass', 0), ('Trk2SE_00', 0, 9)],   [('Grass', 0), ('Trk2SE_10', 0, 9)],   [('GrassW', 1), ('CliffN_W', 1), ('CliffS_W', 1)],   ],
-    [[('Grass', 0), ('CliffS', 0), ('Trk2NE_01', 0, 11)],   [('GrassSW', 0), ('Trk2NE_11', 0, 11)], [('GrassW', 1), ('CliffN_W', 1)],  [('Grass', 0), ('Trk2SE_01', 0, 9)],   [('Grass', 0), ('Trk2SE_11', 0, 9)],   [('GrassW', 3), ('CliffN_W', 3), ('CliffS_W', 3)],   ],
-    [[('Grass', 0), ('CliffS', 0), ('TrkEW', 0, 0)],   [('GrassS', 1)],  [('Grass', 2), ('CliffN', 2)],   [('GrassW', 1)],  [('Grass', 0), ('TrkEW', 0, 8)], [('GrassW', 5), ('CliffN_W', 5), ('CliffS_W', 5)],   ],
-    [[('Grass', 0), ('CliffS', 0), ('TrkEW', 0, 1)],   [('GrassS', 1)],  [('Grass', 2)],   [('Grass', 2), ('CliffE', 2)],   [('Grass', 0), ('TrkEW', 0, 7)],  [('Grass', 6), ('CliffN', 6), ('CliffS', 6), ('CliffS', 2)],   ],
-    [[('Grass', 0), ('CliffS', 0), ('TrkEW', 0, 2)],   [('GrassSE', 0)], [('GrassE', 1)],  [('GrassE', 1), ('CliffE_S', 1)],  [('Grass', 0), ('TrkEW', 0, 6)], [('GrassE', 5), ('CliffN_E', 5), ('CliffS_E', 5)],   ],
-    [[('Grass', 0), ('CliffS', 0), ('Trk2NW_00', 0, 3)],   [('Grass', 0), ('Trk2NW_10', 0, 3)],   [('Grass', 4), ('CliffN', 4), ('CliffS', 4), ('CliffW', 4), ('CliffE', 4), ('TrkNS', 4)],   [('Grass', 0), ('Trk2SW_00', 0, 5), ('TrkNS', 4)],   [('Grass', 0), ('Trk2SW_10', 0, 5), ('TrkNS', 4)],   [('GrassE', 3), ('CliffN_E', 3), ('CliffS_E', 3), ('TrkNS', 4)],   ],
-    [[('Grass', 0), ('CliffS', 0), ('CliffE', 0), ('Trk2NW_01', 0, 3)],   [('Grass', 0), ('CliffE', 0), ('Trk2NW_11', 0, 3)],   [('Grass', 0), ('CliffE', 0), ('TrkNS', 0, 4)],   [('Grass', 0), ('CliffE', 0), ('Trk2SW_01', 0, 5)],   [('Grass', 0), ('CliffE', 0), ('Trk2SW_11', 0, 5)],   [('GrassE', 1), ('CliffE', 0), ('CliffN_E', 1), ('CliffS_E', 1)],   ],
-]
 
 @dataclass
 class Sprite:
@@ -226,15 +216,38 @@ ride.track = [
     RideTrackElement(ride, 2,   4,   0, '2ES', [(2,4,'Trk2SE_11', 'Mask_1'), (1,4,'Trk2SE_10', 'Mask_2SE'), (2,3,'Trk2SE_01', 'Mask_4NW'), (1,3,'Trk2SE_00', 'Mask_1')]),
     RideTrackElement(ride, 1.5, 2.5, 0, 'NS',  [(1,2,'TrkNS','Mask_1')]),
     RideTrackElement(ride, 2,   1,   0, '2NE', [(1,1,'Trk2NE_10', 'Mask_1'), (1,0,'Trk2NE_00', 'Mask_2NE'), (2,1,'Trk2NE_11', 'Mask_4SW'), (2,0,'Trk2NE_01', 'Mask_1')]),
+
+    RideTrackElement(ride, 6.5, 2.5, 4, 'SN',  [(6,2,'TrkNS','Mask_1')]),
+    RideTrackElement(ride, 6.5, 3.5, 4, 'SN',  [(6,3,'TrkNS','Mask_1')]),
+    RideTrackElement(ride, 6.5, 4.5, 4, 'SN',  [(6,4,'TrkNS','Mask_1')]),
+    RideTrackElement(ride, 6.5, 5.5, 4, 'SN',  [(6,5,'TrkNS','Mask_1')]),
 ]
 
-for a,b in zip(ride.track, ride.track[1:] + ride.track[:1]):
+for a,b in zip(ride.track[0:12], ride.track[1:12] + ride.track[0:1]):
+    a.next = b
+    b.prev = a
+for a,b in zip(ride.track[12:15], ride.track[13:16]):
     a.next = b
     b.prev = a
 
 
 ride.cars = [Car(ride, Sprite('lok', 3.5, 0.5, 0, 0))]
 ride.cars_on_track = [set() for _ in ride.track]
+
+
+worldmap = [  # S -----> N       W v E
+    [[('TILE', 'Grass', -2), ('TILE', 'CliffW', -2), ('TILE', 'CliffS', -2)],   [('TILE', 'Grass', 0), ('TILE', 'CliffS', 0), ('TILE', 'CliffW', 0)],   [('TILE', 'Grass', 0), ('TILE', 'CliffW', 0)],   [('TILE', 'Grass', 0), ('TILE', 'CliffW', 0)],   [('TILE', 'Grass', 0), ('TILE', 'CliffW', 0)],   [('TILE', 'Grass', 0), ('TILE', 'CliffW', 0), ('TILE', 'CliffN', 0)],   ],
+    [[('TILE', 'Grass', 0), ('TILE', 'CliffW', 0), ('TILE', 'CliffS', 0), ('TRACK', ride, 11)],   [('TILE', 'Grass', 0), ('TRACK', ride, 11)],   [('TILE', 'Grass', 0), ('TRACK', ride, 10)],   [('TILE', 'Grass', 0), ('TRACK', ride, 9)],   [('TILE', 'Grass', 0), ('TRACK', ride, 9)],   [('TILE', 'GrassW', 1), ('TILE', 'CliffN_W', 1), ('TILE', 'CliffS_W', 1)],   ],
+    [[('TILE', 'Grass', 0), ('TILE', 'CliffS', 0), ('TRACK', ride, 11)],   [('TILE', 'GrassSW', 0), ('TRACK', ride, 11)], [('TILE', 'GrassW', 1), ('TILE', 'CliffN_W', 1)],  [('TILE', 'Grass', 0), ('TRACK', ride, 9)],   [('TILE', 'Grass', 0), ('TRACK', ride, 9)],   [('TILE', 'GrassW', 3), ('TILE', 'CliffN_W', 3), ('TILE', 'CliffS_W', 3)],   ],
+    [[('TILE', 'Grass', 0), ('TILE', 'CliffS', 0), ('TRACK', ride, 0)],   [('TILE', 'GrassS', 1)],  [('TILE', 'Grass', 2), ('TILE', 'CliffN', 2)],   [('TILE', 'GrassW', 1)],  [('TILE', 'Grass', 0), ('TRACK', ride, 8)], [('TILE', 'GrassW', 5), ('TILE', 'CliffN_W', 5), ('TILE', 'CliffS_W', 5)],   ],
+    [[('TILE', 'Grass', 0), ('TILE', 'CliffS', 0), ('TRACK', ride, 1)],   [('TILE', 'GrassS', 1)],  [('TILE', 'Grass', 2)],   [('TILE', 'Grass', 2), ('TILE', 'CliffE', 2)],   [('TILE', 'Grass', 0), ('TRACK', ride, 7)],  [('TILE', 'Grass', 6), ('TILE', 'CliffN', 6), ('TILE', 'CliffS', 6), ('TILE', 'CliffS', 2)],   ],
+    [[('TILE', 'Grass', 0), ('TILE', 'CliffS', 0), ('TRACK', ride, 2)],   [('TILE', 'GrassSE', 0)], [('TILE', 'GrassE', 1)],  [('TILE', 'GrassE', 1), ('TILE', 'CliffE_S', 1)],  [('TILE', 'Grass', 0), ('TRACK', ride, 6)], [('TILE', 'GrassE', 5), ('TILE', 'CliffN_E', 5), ('TILE', 'CliffS_E', 5)],   ],
+    [[('TILE', 'Grass', 0), ('TILE', 'CliffS', 0), ('TRACK', ride, 3)],   [('TILE', 'Grass', 0), ('TRACK', ride, 3)],   [('TILE', 'Grass', 4), ('TILE', 'CliffN', 4), ('TILE', 'CliffS', 4), ('TILE', 'CliffW', 4), ('TILE', 'CliffE', 4), ('TRACK', ride, 12)],   [('TILE', 'Grass', 0), ('TRACK', ride, 5), ('TRACK', ride, 13)],   [('TILE', 'Grass', 0), ('TRACK', ride, 5), ('TRACK', ride, 14)],   [('TILE', 'GrassE', 3), ('TILE', 'CliffN_E', 3), ('TILE', 'CliffS_E', 3), ('TRACK', ride, 15)],   ],
+    [[('TILE', 'Grass', 0), ('TILE', 'CliffS', 0), ('TILE', 'CliffE', 0), ('TRACK', ride, 3)],   [('TILE', 'Grass', 0), ('TILE', 'CliffE', 0), ('TRACK', ride, 3)],   [('TILE', 'Grass', 0), ('TILE', 'CliffE', 0), ('TRACK', ride, 4)],   [('TILE', 'Grass', 0), ('TILE', 'CliffE', 0), ('TRACK', ride, 5)],   [('TILE', 'Grass', 0), ('TILE', 'CliffE', 0), ('TRACK', ride, 5)],   [('TILE', 'GrassE', 1), ('TILE', 'CliffE', 0), ('TILE', 'CliffN_E', 1), ('TILE', 'CliffS_E', 1)],   ],
+]
+
+rides = [ride]
+del ride
 
 MAP_SIZE_NS = 6
 MAP_SIZE_EW = 8
@@ -305,7 +318,8 @@ def load_assets():
 
 
 def update(dt):
-    ride.update(dt)
+    for ride in rides:
+        ride.update(dt)
 
 def masked_blit(src, x, y, mask, xm, ym):
     '''create a masked version of the source and return a blitting spec'''
@@ -361,9 +375,10 @@ def blits(view: View, sel_pos):
     for u in range(U):
         for v in range(V):
             e,n = view.en_from_uv(u+0.5, v+0.5)
-            for t in tiles[int(e)][int(n)]:
-                tile, h = t[0], t[1]
-                if not(tile.startswith('Trk') and h==0):
+            for t in worldmap[int(e)][int(n)]:
+                t_type = t[0]
+                if t_type == 'TILE':
+                    tile, h = t[1], t[2]
                     rot_tile = TILES[tile][view.angle]
                     if not rot_tile:
                         continue
@@ -373,7 +388,8 @@ def blits(view: View, sel_pos):
 
                     selector.check(surf, x, y)
                     yield surf, (x, y)
-                else:
+                elif t_type == 'TRACK':
+                    ride = t[1]
                     track_index = t[2]
                     rtp = ride.track[track_index]
                     for (ee,nn,tile,mask) in rtp.subpieces:
