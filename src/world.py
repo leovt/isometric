@@ -186,35 +186,35 @@ class Car:
         self.sprite.east, self.sprite.north, self.sprite.rot = e,n,r
 
 TILE_BY_CORNER_HEIGHT = {
-    (0,0,0,0): 'Grass',
+    (0,0,0,0): ('Grass', 'CliffW', 'CliffS', 'CliffE', 'CliffN'),
 
-    ( 1, 1,-1,-1): 'GrassN',
-    (-1, 1, 1,-1): 'GrassW',
-    (-1,-1, 1, 1): 'GrassS',
-    ( 1,-1,-1, 1): 'GrassE',
+    ( 1, 1,-1,-1): ('GrassN', 'CliffW_N', 'CliffS', 'CliffE_N', 'CliffN'),
+    (-1, 1, 1,-1): ('GrassW', 'CliffW', 'CliffS_W', 'CliffE', 'CliffN_W'),
+    (-1,-1, 1, 1): ('GrassS', 'CliffW_S', 'CliffS', 'CliffE_S', 'CliffN'),
+    ( 1,-1,-1, 1): ('GrassE', 'CliffW', 'CliffS_E', 'CliffE', 'CliffN_E'),
 
-    ( 1,-1, 1,-1): 'Grass', #todo
-    (-1, 1,-1, 1): 'Grass', #todo
+    ( 1,-1, 1,-1): ('Grass', 'CliffW', 'CliffS', 'CliffE', 'CliffN'), #todo
+    (-1, 1,-1, 1): ('Grass', 'CliffW', 'CliffS', 'CliffE', 'CliffN'), #todo
 
-    ( 2, 0, 0, 0): 'GrassNE',
-    ( 0, 2, 0, 0): 'GrassNW',
-    ( 0, 0, 2, 0): 'GrassSW',
-    ( 0, 0, 0, 2): 'GrassSE',
+    ( 2, 0, 0, 0): ('GrassNE', 'CliffW_N', 'CliffS_E', 'CliffE', 'CliffN'),
+    ( 0, 2, 0, 0): ('GrassNW', 'CliffW', 'CliffS_W', 'CliffE_N', 'CliffN'),
+    ( 0, 0, 2, 0): ('GrassSW', 'CliffW', 'CliffS', 'CliffE_S', 'CliffN_W'),
+    ( 0, 0, 0, 2): ('GrassSE', 'CliffW_S', 'CliffS', 'CliffE', 'CliffN_E'),
 
-    (-2, 0, 0, 0): 'Grass', #'GrassSWd',
-    ( 0,-2, 0, 0): 'Grass', #'GrassSEd',
-    ( 0, 0,-2, 0): 'Grass', #'GrassNEd',
-    ( 0, 0, 0,-2): 'Grass', #'GrassNWd',
+    (-2, 0, 0, 0): ('Grass', 'CliffW', 'CliffS', 'CliffE', 'CliffN'), #'GrassSWd',
+    ( 0,-2, 0, 0): ('Grass', 'CliffW', 'CliffS', 'CliffE', 'CliffN'), #'GrassSEd',
+    ( 0, 0,-2, 0): ('Grass', 'CliffW', 'CliffS', 'CliffE', 'CliffN'), #'GrassNEd',
+    ( 0, 0, 0,-2): ('Grass', 'CliffW', 'CliffS', 'CliffE', 'CliffN'), #'GrassNWd',
 
-    ( 2, 0,-2, 0): 'Grass', #todo
-    ( 0, 2, 0,-2): 'Grass', #todo
-    (-2, 0, 2, 0): 'Grass', #todo
-    ( 0,-2, 0, 2): 'Grass', #todo
+    ( 2, 0,-2, 0): ('Grass', 'CliffW', 'CliffS', 'CliffE', 'CliffN'), #todo
+    ( 0, 2, 0,-2): ('Grass', 'CliffW', 'CliffS', 'CliffE', 'CliffN'), #todo
+    (-2, 0, 2, 0): ('Grass', 'CliffW', 'CliffS', 'CliffE', 'CliffN'), #todo
+    ( 0,-2, 0, 2): ('Grass', 'CliffW', 'CliffS', 'CliffE', 'CliffN'), #todo
 }
 
 class TerrainElement:
-    def __init__(self, surf_map, east, north, corner_height=(0,0,0,0)):
-        self.surf_map = surf_map
+    def __init__(self, terrain, east, north, corner_height=(0,0,0,0)):
+        self.terrain = terrain
         self.east = east
         self.north = north
         self.corner_height = list(corner_height) #SW, SE, NE, NW
@@ -233,8 +233,32 @@ class TerrainElement:
         div, mod = divmod(sum(self.corner_height), 8)
         self.height = 2*div + (0, None, 0, None, 1, None, 2, None)[mod]
         delta_height = tuple([ch - self.height for ch in self.corner_height])
-        self.tile = TILE_BY_CORNER_HEIGHT[delta_height]
+        self.tile, *cliffs = TILE_BY_CORNER_HEIGHT[delta_height]
         self.cliffs = []
+        #return
+        for k in range(4):
+            a = self.corner_height[k-1]
+            b = self.corner_height[k]
+            c = cliffs[k]
+            (de,dn) = [(-1,0), (0,-1), (1,0), (0,1)][k]
+
+            h = (a+b)//2
+
+            if 0 <= self.east + de < len(self.terrain) and 0 <= self.north + dn < len(self.terrain[0]):
+                neighbour = self.terrain[self.east + de][self.north + dn]
+                dh = max(a - neighbour.corner_height[k-2], b - neighbour.corner_height[k-3])
+            else:
+                dh = max(a + 20, b + 20)
+
+            if dh > 0:
+                self.cliffs.append((c, h))
+                h = 2*(h//2)
+            for h0 in range(h-4, h-dh, -4):
+                if dh == 0:
+                    self.cliffs.append((c, h0))
+                else:
+                    self.cliffs.append((c[:6], h0))
+
 
 @dataclass
 class RideTrackElement:
@@ -287,14 +311,14 @@ ride.cars_on_track = [set() for _ in ride.track]
 
 terrain = s = []
 terrain.extend([
-    [TerrainElement(terrain,0,0,(-2,-2,-2,-2)), TerrainElement(terrain,0,1), TerrainElement(terrain,0,2), TerrainElement(terrain,0,3), TerrainElement(terrain,0,4), TerrainElement(terrain,0,5)],
+    [TerrainElement(terrain,0,0,(-2,-2,-2,-2)), TerrainElement(terrain,0,1), TerrainElement(terrain,0,2), TerrainElement(terrain,0,3), TerrainElement(terrain,0,4), TerrainElement(terrain,0,5,(0,0,0,2))],
     [TerrainElement(terrain,1,0), TerrainElement(terrain,1,1), TerrainElement(terrain,1,2), TerrainElement(terrain,1,3), TerrainElement(terrain,1,4), TerrainElement(terrain,1,5,(0,2,2,0))],
     [TerrainElement(terrain,2,0), TerrainElement(terrain,2,1,(0,0,2,0)), TerrainElement(terrain,2,2,(0,2,2,0)), TerrainElement(terrain,2,3), TerrainElement(terrain,2,4), TerrainElement(terrain,2,5,(2,4,4,2))],
     [TerrainElement(terrain,3,0), TerrainElement(terrain,3,1,(0,0,2,2)), TerrainElement(terrain,3,2,(2,2,2,2)), TerrainElement(terrain,3,3,(0,2,2,0)), TerrainElement(terrain,3,4), TerrainElement(terrain,3,5,(4,6,6,4))],
     [TerrainElement(terrain,4,0), TerrainElement(terrain,4,1,(0,0,2,2)), TerrainElement(terrain,4,2,(2,2,2,2)), TerrainElement(terrain,4,3,(2,2,2,2)), TerrainElement(terrain,4,4), TerrainElement(terrain,4,5,(6,6,6,6))],
     [TerrainElement(terrain,5,0), TerrainElement(terrain,5,1,(0,0,0,2)), TerrainElement(terrain,5,2,(2,0,0,2)), TerrainElement(terrain,5,3,(2,0,0,2)), TerrainElement(terrain,5,4), TerrainElement(terrain,5,5,(6,4,4,6))],
     [TerrainElement(terrain,6,0), TerrainElement(terrain,6,1), TerrainElement(terrain,6,2,(4,4,4,4)), TerrainElement(terrain,6,3), TerrainElement(terrain,6,4), TerrainElement(terrain,6,5,(4,2,2,4))],
-    [TerrainElement(terrain,7,0), TerrainElement(terrain,7,1), TerrainElement(terrain,7,2), TerrainElement(terrain,7,3), TerrainElement(terrain,7,4), TerrainElement(terrain,7,5,(2,0,0,2))],
+    [TerrainElement(terrain,7,0,(0,2,0,0)), TerrainElement(terrain,7,1), TerrainElement(terrain,7,2), TerrainElement(terrain,7,3), TerrainElement(terrain,7,4), TerrainElement(terrain,7,5,(2,0,0,2))],
 ])
 
 for tr in terrain:
@@ -303,14 +327,14 @@ for tr in terrain:
 del tr
 
 worldmap = [  # S -----> N       W v E
-    [[('TILE', 'Grass', -2), ('TILE', 'CliffW', -2), ('TILE', 'CliffS', -2)],   [('TILE', 'Grass', 0), ('TILE', 'CliffS', 0), ('TILE', 'CliffW', 0)],   [('TILE', 'Grass', 0), ('TILE', 'CliffW', 0)],   [('TILE', 'Grass', 0), ('TILE', 'CliffW', 0)],   [('TILE', 'Grass', 0), ('TILE', 'CliffW', 0)],   [('TILE', 'Grass', 0), ('TILE', 'CliffW', 0), ('TILE', 'CliffN', 0)],   ],
-    [[('TILE', 'Grass', 0), ('TILE', 'CliffW', 0), ('TILE', 'CliffS', 0), ('TRACK', ride, 11)],   [('TILE', 'Grass', 0), ('TRACK', ride, 11)],   [('TILE', 'Grass', 0), ('TRACK', ride, 10)],   [('TILE', 'Grass', 0), ('TRACK', ride, 9)],   [('TILE', 'Grass', 0), ('TRACK', ride, 9)],   [('TILE', 'GrassW', 1), ('TILE', 'CliffN_W', 1), ('TILE', 'CliffS_W', 1)],   ],
-    [[('TILE', 'Grass', 0), ('TILE', 'CliffS', 0), ('TRACK', ride, 11)],   [('TILE', 'GrassSW', 0), ('TRACK', ride, 11)], [('TILE', 'GrassW', 1), ('TILE', 'CliffN_W', 1)],  [('TILE', 'Grass', 0), ('TRACK', ride, 9)],   [('TILE', 'Grass', 0), ('TRACK', ride, 9)],   [('TILE', 'GrassW', 3), ('TILE', 'CliffN_W', 3), ('TILE', 'CliffS_W', 3)],   ],
-    [[('TILE', 'Grass', 0), ('TILE', 'CliffS', 0), ('TRACK', ride, 0)],   [('TILE', 'GrassS', 1)],  [('TILE', 'Grass', 2), ('TILE', 'CliffN', 2)],   [('TILE', 'GrassW', 1)],  [('TILE', 'Grass', 0), ('TRACK', ride, 8)], [('TILE', 'GrassW', 5), ('TILE', 'CliffN_W', 5), ('TILE', 'CliffS_W', 5)],   ],
-    [[('TILE', 'Grass', 0), ('TILE', 'CliffS', 0), ('TRACK', ride, 1)],   [('TILE', 'GrassS', 1)],  [('TILE', 'Grass', 2)],   [('TILE', 'Grass', 2), ('TILE', 'CliffE', 2)],   [('TILE', 'Grass', 0), ('TRACK', ride, 7)],  [('TILE', 'Grass', 6), ('TILE', 'CliffN', 6), ('TILE', 'CliffS', 6), ('TILE', 'CliffS', 2)],   ],
-    [[('TILE', 'Grass', 0), ('TILE', 'CliffS', 0), ('TRACK', ride, 2)],   [('TILE', 'GrassSE', 0)], [('TILE', 'GrassE', 1)],  [('TILE', 'GrassE', 1), ('TILE', 'CliffE_S', 1)],  [('TILE', 'Grass', 0), ('TRACK', ride, 6)], [('TILE', 'GrassE', 5), ('TILE', 'CliffN_E', 5), ('TILE', 'CliffS_E', 5)],   ],
-    [[('TILE', 'Grass', 0), ('TILE', 'CliffS', 0), ('TRACK', ride, 3)],   [('TILE', 'Grass', 0), ('TRACK', ride, 3)],   [('TILE', 'Grass', 4), ('TILE', 'CliffN', 4), ('TILE', 'CliffS', 4), ('TILE', 'CliffW', 4), ('TILE', 'CliffE', 4), ('TRACK', ride, 12)],   [('TILE', 'Grass', 0), ('TRACK', ride, 5), ('TRACK', ride, 13)],   [('TILE', 'Grass', 0), ('TRACK', ride, 5), ('TRACK', ride, 14)],   [('TILE', 'GrassE', 3), ('TILE', 'CliffN_E', 3), ('TILE', 'CliffS_E', 3), ('TRACK', ride, 15)],   ],
-    [[('TILE', 'Grass', 0), ('TILE', 'CliffS', 0), ('TILE', 'CliffE', 0), ('TRACK', ride, 3)],   [('TILE', 'Grass', 0), ('TILE', 'CliffE', 0), ('TRACK', ride, 3)],   [('TILE', 'Grass', 0), ('TILE', 'CliffE', 0), ('TRACK', ride, 4)],   [('TILE', 'Grass', 0), ('TILE', 'CliffE', 0), ('TRACK', ride, 5)],   [('TILE', 'Grass', 0), ('TILE', 'CliffE', 0), ('TRACK', ride, 5)],   [('TILE', 'GrassE', 1), ('TILE', 'CliffE', 0), ('TILE', 'CliffN_E', 1), ('TILE', 'CliffS_E', 1)],   ],
+    [[('TERRAIN',)],   [('TERRAIN',)],   [('TERRAIN',)],   [('TERRAIN',)],   [('TERRAIN',)],   [('TERRAIN',)],   ],
+    [[('TERRAIN',), ('TRACK', ride, 11)],   [('TERRAIN',), ('TRACK', ride, 11)],   [('TERRAIN',), ('TRACK', ride, 10)],   [('TERRAIN',), ('TRACK', ride, 9)],   [('TERRAIN',), ('TRACK', ride, 9)],   [('TERRAIN',)],   ],
+    [[('TERRAIN',), ('TRACK', ride, 11)],   [('TERRAIN',), ('TRACK', ride, 11)], [('TERRAIN',)],  [('TERRAIN',), ('TRACK', ride, 9)],   [('TERRAIN',), ('TRACK', ride, 9)],   [('TERRAIN',)],   ],
+    [[('TERRAIN',), ('TRACK', ride, 0)],   [('TERRAIN',)],  [('TERRAIN',)],   [('TERRAIN',)],  [('TERRAIN',), ('TRACK', ride, 8)], [('TERRAIN',)],   ],
+    [[('TERRAIN',), ('TRACK', ride, 1)],   [('TERRAIN',)],  [('TERRAIN',)],   [('TERRAIN',)],   [('TERRAIN',), ('TRACK', ride, 7)],  [('TERRAIN',)],   ],
+    [[('TERRAIN',), ('TRACK', ride, 2)],   [('TERRAIN',)], [('TERRAIN',)],  [('TERRAIN',)],  [('TERRAIN',), ('TRACK', ride, 6)], [('TERRAIN',)],   ],
+    [[('TERRAIN',), ('TRACK', ride, 3)],   [('TERRAIN',), ('TRACK', ride, 3)],   [('TERRAIN',), ('TRACK', ride, 12)],   [('TERRAIN',), ('TRACK', ride, 5), ('TRACK', ride, 13)],   [('TERRAIN',), ('TRACK', ride, 5), ('TRACK', ride, 14)],   [('TERRAIN',), ('TRACK', ride, 15)],   ],
+    [[('TERRAIN',), ('TRACK', ride, 3)],   [('TERRAIN',), ('TRACK', ride, 3)],   [('TERRAIN',), ('TRACK', ride, 4)],   [('TERRAIN',), ('TRACK', ride, 5)],   [('TERRAIN',), ('TRACK', ride, 5)],   [('TERRAIN',)],   ],
 ]
 
 rides = [ride]
@@ -446,17 +470,18 @@ def blits(view: View, sel_pos):
 
             for t in worldmap[int(e)][int(n)]:
                 t_type = t[0]
-                if t_type == 'TILE' and t[1][:2] == 'Gr':
-                    tile, h = terr.tile, terr.height
-                    rot_tile = TILES[tile][view.angle]
-                    if not rot_tile:
-                        continue
-                    surf, dx, dy = images[rot_tile]
-                    x = view.x_offset + TILE_HALF_WIDTH * (v-u) - dx
-                    y = view.y_offset + TILE_HALF_WIDTH * (u+v+1)//2 - h*Z_OFFSET - dy  #+1 because the tile is actually at u+0.5, v+0.5
+                if t_type == 'TERRAIN':
+                    for tile, h0 in [(terr.tile, terr.height)] + terr.cliffs:
+                        rot_tile = TILES[tile][view.angle]
+                        if not rot_tile:
+                            continue
+                        surf, dx, dy = images[rot_tile]
+                        x = view.x_offset + TILE_HALF_WIDTH * (v-u) - dx
+                        y = view.y_offset + TILE_HALF_WIDTH * (u+v+1)//2 - h0*Z_OFFSET - dy  #+1 because the tile is actually at u+0.5, v+0.5
 
-                    selector.check(surf, x, y)
-                    yield surf, (x, y)
+                        selector.check(surf, x, y)
+                        yield surf, (x, y)
+
 
                 elif t_type == 'TILE':
                     tile, h = t[1], t[2]
@@ -502,7 +527,7 @@ def blits(view: View, sel_pos):
                                 rot_mask = TILES[mask][view.angle]
                                 mask, dmx, dmy = images[rot_mask]
                                 xm = int(view.x_offset + TILE_HALF_WIDTH * (v-u) - dmx)
-                                ym = int(view.y_offset + TILE_HALF_WIDTH * (u+v+1)//2 - h*Z_OFFSET - dmy)
+                                ym = int(view.y_offset + TILE_HALF_WIDTH * (u+v+1)//2 - rtp.height*Z_OFFSET - dmy)
 
                                 masked = masked_blit(surf, x, y, mask, xm, ym)
                                 if masked:
