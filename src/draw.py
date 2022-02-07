@@ -1,10 +1,20 @@
 import pygame
 from pygame import HWSURFACE, DOUBLEBUF, RESIZABLE, QUIT
 
-from world import load_assets, blits, View, update
+from world import load_assets, blits, View, update, Selector
 FPS = 60
 
 assets = {}
+
+def render_text(text, font, dst, pos):
+    def blit_spec():
+        x,y = pos
+        for line in text.splitlines():
+            surf = font.render(line.rstrip(), 1, pygame.Color("black"))
+            yield surf, (x,y)
+            y += surf.get_height()
+    dst.blits(blit_sequence=blit_spec(), doreturn=False)
+
 
 def main():
     pygame.init()
@@ -13,10 +23,10 @@ def main():
     clock = pygame.time.Clock()
     font = pygame.font.SysFont("Arial", 18)
 
-    def update_fps():
-    	fps = str(int(clock.get_fps()))
-    	fps_text = font.render(fps, 1, pygame.Color("black"))
-    	return fps_text
+    def show_info(selector):
+        fps = str(int(clock.get_fps()))
+        info = f'{fps} FPS\n{selector.details()}'
+        render_text(info, font, screen, (10,10))
 
     load_assets()
 
@@ -29,9 +39,11 @@ def main():
     do_update = True
 
     while running:
+        selector = Selector(pygame.mouse.get_pos())
         screen.fill((148, 179, 167))
-        screen.blits(blit_sequence=blits(view, pygame.mouse.get_pos()), doreturn=False)
-        screen.blit(update_fps(), (10,0))
+        screen.blits(blit_sequence=blits(view, selector), doreturn=False)
+        show_info(selector)
+        pygame.display.flip()
 
         pressed = pygame.key.get_pressed()
         if pressed[pygame.K_LEFT]:
@@ -43,7 +55,6 @@ def main():
         if pressed[pygame.K_DOWN]:
             view.y_offset += 5
 
-        pygame.display.flip()
         for event in pygame.event.get():
             if event.type == QUIT:
                 running = False

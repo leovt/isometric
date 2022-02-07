@@ -170,6 +170,9 @@ class Car:
         self.sprite = sprite
         self.update(0)
 
+    def __str__(self):
+        return f'Car({self.ride}, {self.sprite}, {self.track_element})'
+
     def update(self, dt):
         self.track_pos += 2*dt
 
@@ -222,6 +225,9 @@ class TerrainElement:
         self.tile = None
         self.cliffs = []
 
+    def __str__(self):
+        return f'{self.__class__.__name__}(east={self.east}, north={self.north}, tile={self.tile}, corner_height={self.corner_height})'
+
     def move_corner_up(self, corner):
         self.corner_height[corner] += 2
         h = self.corner_height[corner]
@@ -271,10 +277,16 @@ class RideTrackElement:
     next: object=None
     prev: object=None
 
+    def __str__(self):
+        return f'RideTrackElement({self.ride}, east={self.east}, north={self.north}, track={self.track_piece})'
+
 class Ride:
     def update(self, dt):
         for car in self.cars:
             car.update(dt)
+
+    def __str__(self):
+        return f'Ride(name={self.name})'
 
 ride = Ride()
 ride.name = 'Wild West Train'
@@ -428,13 +440,18 @@ class Selector:
         self.x = sel_pos[0]
         self.y = sel_pos[1]
         self.selected = None
+        self.info = None
 
-    def check(self, surf, x, y):
+    def details(self):
+        return f'position: {self.x},{self.y}\nelement: {self.info}'
+
+    def check(self, surf, x, y, info):
         sw, sh = surf.get_size()
         if x <= self.x < x+sw and y <= self.y < y+sh:
             pixel = surf.get_at((self.x - x, self.y - y))
             if pixel[3]: # not completely transparent
                 self.selected = (surf, (x, y))
+                self.info = info
 
     def ghost(self):
         if self.selected:
@@ -445,16 +462,14 @@ class Selector:
             yield ghost, (x, y)
 
 class DummySelector:
-    def check(self, surf, x, y):
+    def check(self, *args):
         pass
     def ghost(self):
         return []
 
 
-def blits(view: View, sel_pos):
-    if sel_pos is not None:
-        selector = Selector(sel_pos)
-    else:
+def blits(view: View, selector=None):
+    if selector is None:
         selector = DummySelector()
 
     if view.angle == VIEW_FROM_SW or view.angle == VIEW_FROM_NE:
@@ -479,7 +494,7 @@ def blits(view: View, sel_pos):
                         x = view.x_offset + TILE_HALF_WIDTH * (v-u) - dx
                         y = view.y_offset + TILE_HALF_WIDTH * (u+v+1)//2 - h0*Z_OFFSET - dy  #+1 because the tile is actually at u+0.5, v+0.5
 
-                        selector.check(surf, x, y)
+                        selector.check(surf, x, y, terr)
                         yield surf, (x, y)
 
 
@@ -492,7 +507,7 @@ def blits(view: View, sel_pos):
                     x = view.x_offset + TILE_HALF_WIDTH * (v-u) - dx
                     y = view.y_offset + TILE_HALF_WIDTH * (u+v+1)//2 - h*Z_OFFSET - dy  #+1 because the tile is actually at u+0.5, v+0.5
 
-                    selector.check(surf, x, y)
+                    selector.check(surf, x, y, t)
                     yield surf, (x, y)
                 elif t_type == 'TRACK':
                     ride = t[1]
@@ -507,7 +522,7 @@ def blits(view: View, sel_pos):
                             x = view.x_offset + TILE_HALF_WIDTH * (v-u) - dx
                             y = view.y_offset + TILE_HALF_WIDTH * (u+v+1)//2 - rtp.height*Z_OFFSET - dy  #+1 because the tile is actually at u+0.5, v+0.5
 
-                            selector.check(surf, x, y)
+                            selector.check(surf, x, y, rtp)
                             yield surf, (x, y)
 
                             prep_sprites = []
@@ -532,6 +547,6 @@ def blits(view: View, sel_pos):
                                 masked = masked_blit(surf, x, y, mask, xm, ym)
                                 if masked:
                                     surf, (x, y) = masked
-                                    selector.check(surf, x, y)
+                                    selector.check(surf, x, y, car)
                                     yield surf, (x, y)
     yield from selector.ghost()
