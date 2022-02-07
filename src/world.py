@@ -185,6 +185,57 @@ class Car:
 
         self.sprite.east, self.sprite.north, self.sprite.rot = e,n,r
 
+TILE_BY_CORNER_HEIGHT = {
+    (0,0,0,0): 'Grass',
+
+    ( 1, 1,-1,-1): 'GrassN',
+    (-1, 1, 1,-1): 'GrassW',
+    (-1,-1, 1, 1): 'GrassS',
+    ( 1,-1,-1, 1): 'GrassE',
+
+    ( 1,-1, 1,-1): 'Grass', #todo
+    (-1, 1,-1, 1): 'Grass', #todo
+
+    ( 2, 0, 0, 0): 'GrassNE',
+    ( 0, 2, 0, 0): 'GrassNW',
+    ( 0, 0, 2, 0): 'GrassSW',
+    ( 0, 0, 0, 2): 'GrassSE',
+
+    (-2, 0, 0, 0): 'Grass', #'GrassSWd',
+    ( 0,-2, 0, 0): 'Grass', #'GrassSEd',
+    ( 0, 0,-2, 0): 'Grass', #'GrassNEd',
+    ( 0, 0, 0,-2): 'Grass', #'GrassNWd',
+
+    ( 2, 0,-2, 0): 'Grass', #todo
+    ( 0, 2, 0,-2): 'Grass', #todo
+    (-2, 0, 2, 0): 'Grass', #todo
+    ( 0,-2, 0, 2): 'Grass', #todo
+}
+
+class TerrainElement:
+    def __init__(self, surf_map, east, north, corner_height=(0,0,0,0)):
+        self.surf_map = surf_map
+        self.east = east
+        self.north = north
+        self.corner_height = list(corner_height) #SW, SE, NE, NW
+        self.height = 0
+        self.tile = None
+        self.cliffs = []
+
+    def move_corner_up(self, corner):
+        self.corner_height[corner] += 2
+        h = self.corner_height[corner]
+        for i, delta in ((-1, 2), (-2, 4), (-3, 2)):
+            self.corner_height[corner + i] = max(h - delta, self.corner_height[corner + i])
+        self.recalculate()
+
+    def recalculate(self):
+        div, mod = divmod(sum(self.corner_height), 8)
+        self.height = 2*div + (0, None, 0, None, 1, None, 2, None)[mod]
+        delta_height = tuple([ch - self.height for ch in self.corner_height])
+        self.tile = TILE_BY_CORNER_HEIGHT[delta_height]
+        self.cliffs = []
+
 @dataclass
 class RideTrackElement:
     ride: object
@@ -234,6 +285,22 @@ for a,b in zip(ride.track[12:15], ride.track[13:16]):
 ride.cars = [Car(ride, Sprite('lok', 3.5, 0.5, 0, 0))]
 ride.cars_on_track = [set() for _ in ride.track]
 
+terrain = s = []
+terrain.extend([
+    [TerrainElement(terrain,0,0,(-2,-2,-2,-2)), TerrainElement(terrain,0,1), TerrainElement(terrain,0,2), TerrainElement(terrain,0,3), TerrainElement(terrain,0,4), TerrainElement(terrain,0,5)],
+    [TerrainElement(terrain,1,0), TerrainElement(terrain,1,1), TerrainElement(terrain,1,2), TerrainElement(terrain,1,3), TerrainElement(terrain,1,4), TerrainElement(terrain,1,5,(0,2,2,0))],
+    [TerrainElement(terrain,2,0), TerrainElement(terrain,2,1,(0,0,2,0)), TerrainElement(terrain,2,2,(0,2,2,0)), TerrainElement(terrain,2,3), TerrainElement(terrain,2,4), TerrainElement(terrain,2,5,(2,4,4,2))],
+    [TerrainElement(terrain,3,0), TerrainElement(terrain,3,1,(0,0,2,2)), TerrainElement(terrain,3,2,(2,2,2,2)), TerrainElement(terrain,3,3,(0,2,2,0)), TerrainElement(terrain,3,4), TerrainElement(terrain,3,5,(4,6,6,4))],
+    [TerrainElement(terrain,4,0), TerrainElement(terrain,4,1,(0,0,2,2)), TerrainElement(terrain,4,2,(2,2,2,2)), TerrainElement(terrain,4,3,(2,2,2,2)), TerrainElement(terrain,4,4), TerrainElement(terrain,4,5,(6,6,6,6))],
+    [TerrainElement(terrain,5,0), TerrainElement(terrain,5,1,(0,0,0,2)), TerrainElement(terrain,5,2,(2,0,0,2)), TerrainElement(terrain,5,3,(2,0,0,2)), TerrainElement(terrain,5,4), TerrainElement(terrain,5,5,(6,4,4,6))],
+    [TerrainElement(terrain,6,0), TerrainElement(terrain,6,1), TerrainElement(terrain,6,2,(4,4,4,4)), TerrainElement(terrain,6,3), TerrainElement(terrain,6,4), TerrainElement(terrain,6,5,(4,2,2,4))],
+    [TerrainElement(terrain,7,0), TerrainElement(terrain,7,1), TerrainElement(terrain,7,2), TerrainElement(terrain,7,3), TerrainElement(terrain,7,4), TerrainElement(terrain,7,5,(2,0,0,2))],
+])
+
+for tr in terrain:
+    for tr in tr:
+        tr.recalculate()
+del tr
 
 worldmap = [  # S -----> N       W v E
     [[('TILE', 'Grass', -2), ('TILE', 'CliffW', -2), ('TILE', 'CliffS', -2)],   [('TILE', 'Grass', 0), ('TILE', 'CliffS', 0), ('TILE', 'CliffW', 0)],   [('TILE', 'Grass', 0), ('TILE', 'CliffW', 0)],   [('TILE', 'Grass', 0), ('TILE', 'CliffW', 0)],   [('TILE', 'Grass', 0), ('TILE', 'CliffW', 0)],   [('TILE', 'Grass', 0), ('TILE', 'CliffW', 0), ('TILE', 'CliffN', 0)],   ],
@@ -375,9 +442,23 @@ def blits(view: View, sel_pos):
     for u in range(U):
         for v in range(V):
             e,n = view.en_from_uv(u+0.5, v+0.5)
+            terr = terrain[int(e)][int(n)]
+
             for t in worldmap[int(e)][int(n)]:
                 t_type = t[0]
-                if t_type == 'TILE':
+                if t_type == 'TILE' and t[1][:2] == 'Gr':
+                    tile, h = terr.tile, terr.height
+                    rot_tile = TILES[tile][view.angle]
+                    if not rot_tile:
+                        continue
+                    surf, dx, dy = images[rot_tile]
+                    x = view.x_offset + TILE_HALF_WIDTH * (v-u) - dx
+                    y = view.y_offset + TILE_HALF_WIDTH * (u+v+1)//2 - h*Z_OFFSET - dy  #+1 because the tile is actually at u+0.5, v+0.5
+
+                    selector.check(surf, x, y)
+                    yield surf, (x, y)
+
+                elif t_type == 'TILE':
                     tile, h = t[1], t[2]
                     rot_tile = TILES[tile][view.angle]
                     if not rot_tile:
