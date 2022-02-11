@@ -22,6 +22,16 @@ IMAGES = {
     'hillNW': ('art/surface_grass.png', 64, 64, 12*128, 0, 128, 128),
     'hillSW': ('art/surface_grass.png', 64, 64, 9*128, 0, 128, 128),
 
+    'surfmW': ('art/surface_masks.png', 64, 48, 1*128, 0, 128, 128),
+    'surfmS': ('art/surface_masks.png', 64, 48, 2*128, 0, 128, 128),
+    'surfmE': ('art/surface_masks.png', 64, 48, 3*128, 0, 128, 128),
+    'surfmN': ('art/surface_masks.png', 64, 48, 4*128, 0, 128, 128),
+    'surfm': ('art/surface_masks.png', 64, 64, 0*128, 0, 128, 128),
+    'surfmSE': ('art/surface_masks.png', 64, 64, 10*128, 0, 128, 128),
+    'surfmNE': ('art/surface_masks.png', 64, 64, 11*128, 0, 128, 128),
+    'surfmNW': ('art/surface_masks.png', 64, 64, 12*128, 0, 128, 128),
+    'surfmSW': ('art/surface_masks.png', 64, 64, 9*128, 0, 128, 128),
+
     'cliffW':   ('art/cliff_dirt.png', 64, 16, 128, 0, 64, 128),
     'cliffS':   ('art/cliff_dirt.png',  0, 16, 192, 0, 64, 128),
     'cliffW_S': ('art/cliff_dirt.png', 64, 16,   0, 0, 64, 128),
@@ -233,7 +243,35 @@ class TerrainElement:
         h = self.corner_height[corner]
         for i, delta in ((-1, 2), (-2, 4), (-3, 2)):
             self.corner_height[corner + i] = max(h - delta, self.corner_height[corner + i])
+        self.recalculate_propagate()
+
+    def move_corner_down(self, corner):
+        self.corner_height[corner] -= 2
+        h = self.corner_height[corner]
+        for i, delta in ((-1, 2), (-2, 4), (-3, 2)):
+            self.corner_height[corner + i] = min(h + delta, self.corner_height[corner + i])
+        self.recalculate_propagate()
+
+    def move_up(self):
+        h0 = min(self.corner_height)
+        self.corner_height = [max(h, h0+2) for h in self.corner_height]
+        self.recalculate_propagate()
+
+    def move_down(self):
+        h0 = max(self.corner_height)
+        self.corner_height = [min(h, h0-2) for h in self.corner_height]
+        self.recalculate_propagate()
+
+    def recalculate_propagate(self):
         self.recalculate()
+        if self.east > 0:
+            self.terrain[self.east-1][self.north].recalculate()
+        if self.east < len(self.terrain)-1:
+            self.terrain[self.east+1][self.north].recalculate()
+        if self.north > 0:
+            self.terrain[self.east][self.north-1].recalculate()
+        if self.north < len(self.terrain[self.east])-1:
+            self.terrain[self.east][self.north+1].recalculate()
 
     def recalculate(self):
         div, mod = divmod(sum(self.corner_height), 8)
@@ -440,18 +478,28 @@ class Selector:
         self.x = sel_pos[0]
         self.y = sel_pos[1]
         self.selected = None
+        self.e = None
+        self.n = None
         self.info = None
+        self.mask_pixel = None
 
     def details(self):
-        return f'position: {self.x},{self.y}\nelement: {self.info}'
+        return f'position: {self.x},{self.y}\nelement: {self.info}\nmask: {self.mask_pixel}'
 
-    def check(self, surf, x, y, info):
+    def check(self, surf, x, y, e, n, info, mask=None):
         sw, sh = surf.get_size()
         if x <= self.x < x+sw and y <= self.y < y+sh:
             pixel = surf.get_at((self.x - x, self.y - y))
             if pixel[3]: # not completely transparent
                 self.selected = (surf, (x, y))
+                self.e = e
+                self.n = n
                 self.info = info
+                if mask:
+                    self.mask_pixel = mask.get_at((self.x - x, self.y - y))
+                else:
+                    self.mask_pixel = None
+
 
     def ghost(self):
         if self.selected:
@@ -486,7 +534,23 @@ def blits(view: View, selector=None):
             for t in worldmap[int(e)][int(n)]:
                 t_type = t[0]
                 if t_type == 'TERRAIN':
-                    for tile, h0 in [(terr.tile, terr.height)] + terr.cliffs:
+                    tile, h0 = terr.tile, terr.height
+                    rot_tile = TILES[tile][view.angle]
+                    if not rot_tile:
+                        continue
+                    surf, dx, dy = images[rot_tile]
+                    x = view.x_offset + TILE_HALF_WIDTH * (v-u) - dx
+                    y = view.y_offset + TILE_HALF_WIDTH * (u+v+1)//2 - h0*Z_OFFSET - dy  #+1 because the tile is actually at u+0.5, v+0.5
+
+                    if rot_tile == 'grass':
+                        mask = 'surfm'
+                    else:
+                        mask = 'surfm' + rot_tile[4:]
+
+                    selector.check(surf, x, y, int(e), int(n), terr, images[mask][0])
+                    yield surf, (x, y)
+
+                    for tile, h0 in terr.cliffs:
                         rot_tile = TILES[tile][view.angle]
                         if not rot_tile:
                             continue
@@ -494,7 +558,7 @@ def blits(view: View, selector=None):
                         x = view.x_offset + TILE_HALF_WIDTH * (v-u) - dx
                         y = view.y_offset + TILE_HALF_WIDTH * (u+v+1)//2 - h0*Z_OFFSET - dy  #+1 because the tile is actually at u+0.5, v+0.5
 
-                        selector.check(surf, x, y, terr)
+                        selector.check(surf, x, y, int(e), int(n), terr)
                         yield surf, (x, y)
 
 
@@ -507,7 +571,7 @@ def blits(view: View, selector=None):
                     x = view.x_offset + TILE_HALF_WIDTH * (v-u) - dx
                     y = view.y_offset + TILE_HALF_WIDTH * (u+v+1)//2 - h*Z_OFFSET - dy  #+1 because the tile is actually at u+0.5, v+0.5
 
-                    selector.check(surf, x, y, t)
+                    selector.check(surf, x, y, int(e), int(n), t)
                     yield surf, (x, y)
                 elif t_type == 'TRACK':
                     ride = t[1]
@@ -522,7 +586,7 @@ def blits(view: View, selector=None):
                             x = view.x_offset + TILE_HALF_WIDTH * (v-u) - dx
                             y = view.y_offset + TILE_HALF_WIDTH * (u+v+1)//2 - rtp.height*Z_OFFSET - dy  #+1 because the tile is actually at u+0.5, v+0.5
 
-                            selector.check(surf, x, y, rtp)
+                            selector.check(surf, x, y, int(e), int(n), rtp)
                             yield surf, (x, y)
 
                             prep_sprites = []
@@ -547,6 +611,6 @@ def blits(view: View, selector=None):
                                 masked = masked_blit(surf, x, y, mask, xm, ym)
                                 if masked:
                                     surf, (x, y) = masked
-                                    selector.check(surf, x, y, car)
+                                    selector.check(surf, x, y, int(e), int(n), car)
                                     yield surf, (x, y)
     yield from selector.ghost()

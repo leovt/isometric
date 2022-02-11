@@ -1,7 +1,7 @@
 import pygame
 from pygame import HWSURFACE, DOUBLEBUF, RESIZABLE, QUIT
 
-from world import load_assets, blits, View, update, Selector
+from world import load_assets, blits, View, update, Selector, Z_OFFSET
 FPS = 60
 
 assets = {}
@@ -35,8 +35,11 @@ def main():
     view = View(0, 400, 100)
 
     drag_start_coord = None
+    drag_button = None
 
     do_update = True
+
+    height_change_tile = None
 
     while running:
         selector = Selector(pygame.mouse.get_pos())
@@ -55,6 +58,8 @@ def main():
         if pressed[pygame.K_DOWN]:
             view.y_offset += 5
 
+
+
         for event in pygame.event.get():
             if event.type == QUIT:
                 running = False
@@ -67,16 +72,32 @@ def main():
                 if event.key==pygame.K_SPACE:
                     do_update = not do_update
             elif event.type==pygame.MOUSEBUTTONDOWN:
-                if event.button == 2:
-                    drag_start_coord = event.pos
+                drag_start_coord = event.pos
+                drag_button = event.button
+                if event.button == 1:
+                    if hasattr(selector.info, 'move_down'):
+                        height_change_tile = selector.info
+                    else:
+                        height_change_tile = None
+
             elif event.type==pygame.MOUSEBUTTONUP:
-                if event.button == 2:
-                    drag_start_coord = None
+                drag_start_coord = None
+                drag_button = None
+                height_change_tile = None
+
             elif event.type==pygame.MOUSEMOTION:
-                if drag_start_coord:
+                if drag_button == 2:
                     view.x_offset += event.pos[0] - drag_start_coord[0]
                     view.y_offset += event.pos[1] - drag_start_coord[1]
                     drag_start_coord = event.pos
+                elif drag_button == 1 and height_change_tile:
+                    if event.pos[1] - drag_start_coord[1] > 2*Z_OFFSET:
+                        height_change_tile.move_down()
+                        drag_start_coord = drag_start_coord[0], drag_start_coord[1] + 2*Z_OFFSET
+                    if event.pos[1] - drag_start_coord[1] < -2*Z_OFFSET:
+                        height_change_tile.move_up()
+                        drag_start_coord = drag_start_coord[0], drag_start_coord[1] - 2*Z_OFFSET
+
 
         dt = 0.001 * clock.tick(FPS)
         if do_update:
