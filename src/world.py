@@ -12,13 +12,6 @@ VIEW_FROM_NE = 2
 VIEW_FROM_SE = 3
 
 IMAGES = {
-    'cliffW':   ('art/cliff_dirt.png', 64, 16, 128, 0, 64, 128),
-    'cliffS':   ('art/cliff_dirt.png',  0, 16, 192, 0, 64, 128),
-    'cliffW_S': ('art/cliff_dirt.png', 64, 16,   0, 0, 64, 128),
-    'cliffS_W': ('art/cliff_dirt.png',  0, 16,  64, 0, 64, 128),
-    'cliffW_N': ('art/cliff_dirt.png', 64, 16, 256, 0, 64, 128),
-    'cliffS_E': ('art/cliff_dirt.png',  0, 16, 320, 0, 64, 128),
-
     'trkNS': ('art/models/track/0000.png', 64, 32, 0, 0, 128, 64),
     'trkEW': ('art/models/track/0001.png', 64, 32, 0, 0, 128, 64),
 
@@ -66,21 +59,6 @@ TILES = {
     'Mask_4SE': ['mask_4SE', 'mask_4NE', 'mask_4NW', 'mask_4SW'],
     'Mask_4NE': ['mask_4NE', 'mask_4NW', 'mask_4SW', 'mask_4SE'],
     'Mask_4NW': ['mask_4NW', 'mask_4SW', 'mask_4SE', 'mask_4NE'],
-
-    'CliffW': ['cliffW', 'cliffS', None, None],
-    'CliffS': ['cliffS', None, None, 'cliffW'],
-    'CliffE': [None, None, 'cliffW', 'cliffS'],
-    'CliffN': [None, 'cliffW', 'cliffS', None],
-
-    'CliffW_S': ['cliffW_S', 'cliffS_E', None, None],
-    'CliffS_E': ['cliffS_E', None, None, 'cliffW_S'],
-    'CliffE_N': [None, None, 'cliffW_S', 'cliffS_E'],
-    'CliffN_W': [None, 'cliffW_S', 'cliffS_E', None],
-
-    'CliffW_N': ['cliffW_N', 'cliffS_W', None, None],
-    'CliffS_W': ['cliffS_W', None, None, 'cliffW_N'],
-    'CliffE_S': [None, None, 'cliffW_N', 'cliffS_W'],
-    'CliffN_E': [None, 'cliffW_N', 'cliffS_W', None],
 
     'TrkNS': ['trkNS', 'trkEW', 'trkNS', 'trkEW'],
     'TrkEW': ['trkEW', 'trkNS', 'trkEW', 'trkNS'],
@@ -383,7 +361,7 @@ def blits(view: View, selector=None):
                 t_type = t[0]
                 if t_type == 'TERRAIN':
                     h0 = terr.height
-                    surf, dx, dy = terr.get_image(view.angle)
+                    surf, dx, dy = terr.get_surface_image(view.angle)
                     x = view.x_offset + TILE_HALF_WIDTH * (v-u) - dx
                     y = view.y_offset + TILE_HALF_WIDTH * (u+v+1)//2 - h0*Z_OFFSET - dy  #+1 because the tile is actually at u+0.5, v+0.5
 
@@ -395,11 +373,8 @@ def blits(view: View, selector=None):
                     selector.check(surf, x, y, int(e), int(n), terr)
                     yield surf, (x, y)
 
-                    for tile, h0 in terr.cliffs:
-                        rot_tile = TILES[tile][view.angle]
-                        if not rot_tile:
-                            continue
-                        surf, dx, dy = images[rot_tile]
+                    for img, h0 in terr.get_wall_images_and_height(view.angle):
+                        surf, dx, dy = img
                         x = view.x_offset + TILE_HALF_WIDTH * (v-u) - dx
                         y = view.y_offset + TILE_HALF_WIDTH * (u+v+1)//2 - h0*Z_OFFSET - dy  #+1 because the tile is actually at u+0.5, v+0.5
 

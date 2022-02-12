@@ -21,37 +21,55 @@ class TerrainShape(enum.IntEnum):
     LOWER_NW = 16
     FOLD_SW_NE = 17
     FOLD_SE_NW = 18
+    NUMBER_OF_IMAGES = 19
 TS = TerrainShape
+
+class WallShape(enum.IntEnum):
+    WALL_W_S = 0
+    WALL_S_W = 1
+    WALL_W = 2
+    WALL_S = 3
+    WALL_W_N = 4
+    WALL_S_E = 5
+    NUMBER_OF_IMAGES = 6
+    WALL_E_N = 6
+    WALL_N_E = 7
+    WALL_E = 8
+    WALL_N = 9
+    WALL_E_S = 10
+    WALL_N_W = 11
+
+WS = WallShape
 
 #SW, SE, NE, NW
 SHAPE_BY_CORNER_HEIGHT = {
-    ( 0, 0, 0, 0): (TS.FLAT, 'CliffW', 'CliffS', 'CliffE', 'CliffN'),
+    ( 0, 0, 0, 0): (TS.FLAT, WS.WALL_W, WS.WALL_S, WS.WALL_E, WS.WALL_N),
 
-    (-1, 1, 1,-1): (TS.SLOPE_W, 'CliffW', 'CliffS_W', 'CliffE', 'CliffN_W'),
-    (-1,-1, 1, 1): (TS.SLOPE_S, 'CliffW_S', 'CliffS', 'CliffE_S', 'CliffN'),
-    ( 1,-1,-1, 1): (TS.SLOPE_E, 'CliffW', 'CliffS_E', 'CliffE', 'CliffN_E'),
-    ( 1, 1,-1,-1): (TS.SLOPE_N, 'CliffW_N', 'CliffS', 'CliffE_N', 'CliffN'),
+    (-1, 1, 1,-1): (TS.SLOPE_W, WS.WALL_W, WS.WALL_S_W, WS.WALL_E, WS.WALL_N_W),
+    (-1,-1, 1, 1): (TS.SLOPE_S, WS.WALL_W_S, WS.WALL_S, WS.WALL_E_S, WS.WALL_N),
+    ( 1,-1,-1, 1): (TS.SLOPE_E, WS.WALL_W, WS.WALL_S_E, WS.WALL_E, WS.WALL_N_E),
+    ( 1, 1,-1,-1): (TS.SLOPE_N, WS.WALL_W_N, WS.WALL_S, WS.WALL_E_N, WS.WALL_N),
 
-    (-2, 0, 2, 0): (TS.FULL_SW, 'CliffW', 'CliffS', 'CliffE', 'CliffN'),
-    ( 0,-2, 0, 2): (TS.FULL_SE, 'CliffW', 'CliffS', 'CliffE', 'CliffN'),
-    ( 2, 0,-2, 0): (TS.FULL_NE, 'CliffW', 'CliffS', 'CliffE', 'CliffN'),
-    ( 0, 2, 0,-2): (TS.FULL_NW, 'CliffW', 'CliffS', 'CliffE', 'CliffN'),
+    (-2, 0, 2, 0): (TS.FULL_SW, WS.WALL_W, WS.WALL_S, WS.WALL_E, WS.WALL_N),
+    ( 0,-2, 0, 2): (TS.FULL_SE, WS.WALL_W, WS.WALL_S, WS.WALL_E, WS.WALL_N),
+    ( 2, 0,-2, 0): (TS.FULL_NE, WS.WALL_W, WS.WALL_S, WS.WALL_E, WS.WALL_N),
+    ( 0, 2, 0,-2): (TS.FULL_NW, WS.WALL_W, WS.WALL_S, WS.WALL_E, WS.WALL_N),
 
-    ( 0, 0, 2, 0): (TS.UPPER_SW, 'CliffW', 'CliffS', 'CliffE_S', 'CliffN_W'),
-    ( 0, 0, 0, 2): (TS.UPPER_SE, 'CliffW_S', 'CliffS', 'CliffE', 'CliffN_E'),
-    ( 2, 0, 0, 0): (TS.UPPER_NE, 'CliffW_N', 'CliffS_E', 'CliffE', 'CliffN'),
-    ( 0, 2, 0, 0): (TS.UPPER_NW, 'CliffW', 'CliffS_W', 'CliffE_N', 'CliffN'),
+    ( 0, 0, 2, 0): (TS.UPPER_SW, WS.WALL_W, WS.WALL_S, WS.WALL_E_S, WS.WALL_N_W),
+    ( 0, 0, 0, 2): (TS.UPPER_SE, WS.WALL_W_S, WS.WALL_S, WS.WALL_E, WS.WALL_N_E),
+    ( 2, 0, 0, 0): (TS.UPPER_NE, WS.WALL_W_N, WS.WALL_S_E, WS.WALL_E, WS.WALL_N),
+    ( 0, 2, 0, 0): (TS.UPPER_NW, WS.WALL_W, WS.WALL_S_W, WS.WALL_E_N, WS.WALL_N),
 
-    (-2, 0, 0, 0): (TS.LOWER_SW, 'CliffW', 'CliffS', 'CliffE', 'CliffN'),
-    ( 0,-2, 0, 0): (TS.LOWER_SE, 'CliffW', 'CliffS', 'CliffE', 'CliffN'),
-    ( 0, 0,-2, 0): (TS.LOWER_NE, 'CliffW', 'CliffS', 'CliffE', 'CliffN'),
-    ( 0, 0, 0,-2): (TS.LOWER_NW, 'CliffW', 'CliffS', 'CliffE', 'CliffN'),
+    (-2, 0, 0, 0): (TS.LOWER_SW, WS.WALL_W, WS.WALL_S, WS.WALL_E, WS.WALL_N),
+    ( 0,-2, 0, 0): (TS.LOWER_SE, WS.WALL_W, WS.WALL_S, WS.WALL_E, WS.WALL_N),
+    ( 0, 0,-2, 0): (TS.LOWER_NE, WS.WALL_W, WS.WALL_S, WS.WALL_E, WS.WALL_N),
+    ( 0, 0, 0,-2): (TS.LOWER_NW, WS.WALL_W, WS.WALL_S, WS.WALL_E, WS.WALL_N),
 
-    ( 1,-1, 1,-1): (TS.FOLD_SW_NE, 'CliffW', 'CliffS', 'CliffE', 'CliffN'),
-    (-1, 1,-1, 1): (TS.FOLD_SE_NW, 'CliffW', 'CliffS', 'CliffE', 'CliffN'),
+    ( 1,-1, 1,-1): (TS.FOLD_SW_NE, WS.WALL_W, WS.WALL_S, WS.WALL_E, WS.WALL_N),
+    (-1, 1,-1, 1): (TS.FOLD_SE_NW, WS.WALL_W, WS.WALL_S, WS.WALL_E, WS.WALL_N),
 }
 
-ROTATED_SHAPES = [
+ROTATED_SHAPES_SURFACE = [
     (TS.FLAT, TS.FLAT, TS.FLAT, TS.FLAT),
     (TS.SLOPE_W, TS.SLOPE_S, TS.SLOPE_E, TS.SLOPE_N),
     (TS.SLOPE_S, TS.SLOPE_E, TS.SLOPE_N, TS.SLOPE_W),
@@ -73,35 +91,71 @@ ROTATED_SHAPES = [
     (TS.FOLD_SE_NW, TS.FOLD_SW_NE, TS.FOLD_SE_NW, TS.FOLD_SW_NE),
 ]
 
-Y_OFFSET = [64, 48,48,48,48, 64,64,64,64, 64,64,64,64, 64,64,64,64, 48,48]
+ROTATED_SHAPES_WALLS = [
+    (WS.WALL_W_S, WS.WALL_S_E, None, None),
+    (WS.WALL_S_W, None, None, WS.WALL_W_N),
+    (WS.WALL_W, WS.WALL_S, None, None),
+    (WS.WALL_S, None, None, WS.WALL_W),
+    (WS.WALL_W_N, WS.WALL_S_W, None, None),
+    (WS.WALL_S_E, None, None, WS.WALL_W_S),
 
-TERRAIN_MATERIALS = [
+    (None, None, WS.WALL_W_S, WS.WALL_S_E),
+    (None, WS.WALL_W_N, WS.WALL_S_W, None),
+    (None, None, WS.WALL_W, WS.WALL_S),
+    (None, WS.WALL_W, WS.WALL_S, None),
+    (None, None, WS.WALL_W_N, WS.WALL_S_W),
+    (None, WS.WALL_W_S, WS.WALL_S_E, None),
+]
+
+WALL_EXTENSION = [
+    WS.WALL_W, WS.WALL_S, WS.WALL_W, WS.WALL_S, WS.WALL_W, WS.WALL_S,
+    WS.WALL_E, WS.WALL_N, WS.WALL_E, WS.WALL_N, WS.WALL_E, WS.WALL_N,
+]
+
+
+SURFACE_MATERIALS = [
     ('grass', 'art/surface_grass.png'),
+]
+WALL_MATERIALS = [
+    ('dirt', 'art/cliff_dirt.png'),
 ]
 
 def load_assets():
+    Y_OFFSET = [64, 48,48,48,48, 64,64,64,64, 64,64,64,64, 64,64,64,64, 48,48]
+    X_OFFSET = [64, 0, 64, 0, 64, 0]
     global images
     images = {}
-    for name, fname in TERRAIN_MATERIALS:
+    for name, fname in SURFACE_MATERIALS:
         src = pygame.image.load(fname).convert_alpha()
         images[name] = [
             (src.subsurface(pygame.Rect(i*128, 0, 128, 128)), 64, Y_OFFSET[i])
-            for i in range(len(TerrainShape))]
+            for i in range(TerrainShape.NUMBER_OF_IMAGES)]
+    for name, fname in WALL_MATERIALS:
+        src = pygame.image.load(fname).convert_alpha()
+        images[name] = [
+            (src.subsurface(pygame.Rect(i*64, 0, 64, 128)), X_OFFSET[i], 16)
+            for i in range(WallShape.NUMBER_OF_IMAGES)]
 
 
 class TerrainElement:
-    def __init__(self, terrain, east, north, corner_height=(0,0,0,0), material='grass'):
+    def __init__(self, terrain, east, north, corner_height=(0,0,0,0), surf_material='grass', wall_material='dirt'):
         self.terrain = terrain
         self.east = east
         self.north = north
         self.corner_height = list(corner_height) #SW, SE, NE, NW
         self.height = 0
         self.shape = None
-        self.material = material
-        self.cliffs = []
+        self.surf_material = surf_material
+        self.wall_material = wall_material
+        self.walls = []
 
-    def get_image(self, view_angle):
-        return images[self.material][ROTATED_SHAPES[self.shape][view_angle]]
+    def get_surface_image(self, view_angle):
+        return images[self.surf_material][ROTATED_SHAPES_SURFACE[self.shape][view_angle]]
+
+    def get_wall_images_and_height(self, view_angle):
+        for wall, height in self.walls:
+            if ROTATED_SHAPES_WALLS[wall][view_angle] is not None:
+                yield images[self.wall_material][ROTATED_SHAPES_WALLS[wall][view_angle]], height
 
     def __str__(self):
         return f'{self.__class__.__name__}(east={self.east}, north={self.north}, shape={self.shape.name}, corner_height={self.corner_height})'
@@ -145,13 +199,13 @@ class TerrainElement:
         div, mod = divmod(sum(self.corner_height), 8)
         self.height = 2*div + (0, None, 0, None, 1, None, 2, None)[mod]
         delta_height = tuple([ch - self.height for ch in self.corner_height])
-        self.shape, *cliffs = SHAPE_BY_CORNER_HEIGHT[delta_height]
-        self.cliffs = []
+        self.shape, *walls = SHAPE_BY_CORNER_HEIGHT[delta_height]
+        self.walls = []
         #return
         for k in range(4):
             a = self.corner_height[k-1]
             b = self.corner_height[k]
-            c = cliffs[k]
+            c = walls[k]
             (de,dn) = [(-1,0), (0,-1), (1,0), (0,1)][k]
 
             h = (a+b)//2
@@ -163,13 +217,13 @@ class TerrainElement:
                 dh = max(a + 20, b + 20)
 
             if dh > 0:
-                self.cliffs.append((c, h))
+                self.walls.append((c, h))
                 h = 2*(h//2)
             for h0 in range(h-4, h-dh, -4):
                 if dh == 0:
-                    self.cliffs.append((c, h0))
+                    self.walls.append((c, h0))
                 else:
-                    self.cliffs.append((c[:6], h0))
+                    self.walls.append((WALL_EXTENSION[c], h0))
 
 def create_sample_terrain():
     terrain = s = []
