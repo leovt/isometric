@@ -2,6 +2,8 @@ import pygame
 from pygame import HWSURFACE, DOUBLEBUF, RESIZABLE, QUIT
 
 from world import load_assets, blits, View, update, Selector, Z_OFFSET
+import terrain
+
 FPS = 60
 
 assets = {}
@@ -29,6 +31,7 @@ def main():
         render_text(info, font, screen, (10,10))
 
     load_assets()
+    terrain.load_assets()
 
     running = True
 
