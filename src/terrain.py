@@ -1,6 +1,12 @@
 import enum
 import pygame
 
+class Subtiles(enum.IntEnum):
+    SW = 0
+    SE = 1
+    NE = 2
+    NW = 3
+
 class TerrainShape(enum.IntEnum):
     FLAT = 0
     SLOPE_W = 1
@@ -50,24 +56,25 @@ SHAPE_BY_CORNER_HEIGHT = {
     ( 1,-1,-1, 1): (TS.SLOPE_E, WS.WALL_W, WS.WALL_S_E, WS.WALL_E, WS.WALL_N_E),
     ( 1, 1,-1,-1): (TS.SLOPE_N, WS.WALL_W_N, WS.WALL_S, WS.WALL_E_N, WS.WALL_N),
 
-    (-2, 0, 2, 0): (TS.FULL_SW, WS.WALL_W, WS.WALL_S, WS.WALL_E, WS.WALL_N),
-    ( 0,-2, 0, 2): (TS.FULL_SE, WS.WALL_W, WS.WALL_S, WS.WALL_E, WS.WALL_N),
-    ( 2, 0,-2, 0): (TS.FULL_NE, WS.WALL_W, WS.WALL_S, WS.WALL_E, WS.WALL_N),
-    ( 0, 2, 0,-2): (TS.FULL_NW, WS.WALL_W, WS.WALL_S, WS.WALL_E, WS.WALL_N),
+    (-2, 0, 2, 0): (TS.FULL_SW, WS.WALL_W_S, WS.WALL_S_W, WS.WALL_E_S, WS.WALL_N_W),
+    ( 0,-2, 0, 2): (TS.FULL_SE, WS.WALL_W_S, WS.WALL_S_E, WS.WALL_E_S, WS.WALL_N_E),
+    ( 2, 0,-2, 0): (TS.FULL_NE, WS.WALL_W_N, WS.WALL_S_E, WS.WALL_E_N, WS.WALL_N_E),
+    ( 0, 2, 0,-2): (TS.FULL_NW, WS.WALL_W_N, WS.WALL_S_W, WS.WALL_E_N, WS.WALL_N_W),
 
     ( 0, 0, 2, 0): (TS.UPPER_SW, WS.WALL_W, WS.WALL_S, WS.WALL_E_S, WS.WALL_N_W),
     ( 0, 0, 0, 2): (TS.UPPER_SE, WS.WALL_W_S, WS.WALL_S, WS.WALL_E, WS.WALL_N_E),
     ( 2, 0, 0, 0): (TS.UPPER_NE, WS.WALL_W_N, WS.WALL_S_E, WS.WALL_E, WS.WALL_N),
     ( 0, 2, 0, 0): (TS.UPPER_NW, WS.WALL_W, WS.WALL_S_W, WS.WALL_E_N, WS.WALL_N),
 
-    (-2, 0, 0, 0): (TS.LOWER_SW, WS.WALL_W, WS.WALL_S, WS.WALL_E, WS.WALL_N),
-    ( 0,-2, 0, 0): (TS.LOWER_SE, WS.WALL_W, WS.WALL_S, WS.WALL_E, WS.WALL_N),
-    ( 0, 0,-2, 0): (TS.LOWER_NE, WS.WALL_W, WS.WALL_S, WS.WALL_E, WS.WALL_N),
-    ( 0, 0, 0,-2): (TS.LOWER_NW, WS.WALL_W, WS.WALL_S, WS.WALL_E, WS.WALL_N),
+    (-2, 0, 0, 0): (TS.LOWER_SW, WS.WALL_W_S, WS.WALL_S_W, WS.WALL_E, WS.WALL_N),
+    ( 0,-2, 0, 0): (TS.LOWER_SE, WS.WALL_W, WS.WALL_S_E, WS.WALL_E_S, WS.WALL_N),
+    ( 0, 0,-2, 0): (TS.LOWER_NE, WS.WALL_W, WS.WALL_S, WS.WALL_E_N, WS.WALL_N_E),
+    ( 0, 0, 0,-2): (TS.LOWER_NW, WS.WALL_W_N, WS.WALL_S, WS.WALL_E, WS.WALL_N_W),
 
-    ( 1,-1, 1,-1): (TS.FOLD_SW_NE, WS.WALL_W, WS.WALL_S, WS.WALL_E, WS.WALL_N),
-    (-1, 1,-1, 1): (TS.FOLD_SE_NW, WS.WALL_W, WS.WALL_S, WS.WALL_E, WS.WALL_N),
+    ( 1,-1, 1,-1): (TS.FOLD_SW_NE, WS.WALL_W_N, WS.WALL_S_E, WS.WALL_E_S, WS.WALL_N_W),
+    (-1, 1,-1, 1): (TS.FOLD_SE_NW, WS.WALL_W_S, WS.WALL_S_W, WS.WALL_E_N, WS.WALL_N_E),
 }
+
 
 ROTATED_SHAPES_SURFACE = [
     (TS.FLAT, TS.FLAT, TS.FLAT, TS.FLAT),
@@ -114,8 +121,15 @@ WALL_EXTENSION = [
 
 
 SURFACE_MATERIALS = [
-    ('grass', 'art/surface_grass.png'),
+    ('grass', 'art/surface_grass.png', 0),
+    ('_subtile', 'art/surface_masks.png', 0),
+    ('_border', 'art/surface_border.png', 0),
+    (('_corner', Subtiles.SW), 'art/surface_markings.png', 0),
+    (('_corner', Subtiles.SE), 'art/surface_markings.png', 128),
+    (('_corner', Subtiles.NE), 'art/surface_markings.png', 256),
+    (('_corner', Subtiles.NW), 'art/surface_markings.png', 384),
 ]
+
 WALL_MATERIALS = [
     ('dirt', 'art/cliff_dirt.png'),
 ]
@@ -125,10 +139,10 @@ def load_assets():
     X_OFFSET = [64, 0, 64, 0, 64, 0]
     global images
     images = {}
-    for name, fname in SURFACE_MATERIALS:
+    for name, fname, y in SURFACE_MATERIALS:
         src = pygame.image.load(fname).convert_alpha()
         images[name] = [
-            (src.subsurface(pygame.Rect(i*128, 0, 128, 128)), 64, Y_OFFSET[i])
+            (src.subsurface(pygame.Rect(i*128, y, 128, 128)), 64, Y_OFFSET[i])
             for i in range(TerrainShape.NUMBER_OF_IMAGES)]
     for name, fname in WALL_MATERIALS:
         src = pygame.image.load(fname).convert_alpha()
@@ -148,9 +162,19 @@ class TerrainElement:
         self.surf_material = surf_material
         self.wall_material = wall_material
         self.walls = []
+        self.selected = False
+        self.selected_corner = None
 
     def get_surface_image(self, view_angle):
-        return images[self.surf_material][ROTATED_SHAPES_SURFACE[self.shape][view_angle]]
+        img = images[self.surf_material][ROTATED_SHAPES_SURFACE[self.shape][view_angle]]
+        if self.selected:
+            surf, x, y = img
+            surf = surf.copy()
+            surf.blit(images['_border'][ROTATED_SHAPES_SURFACE[self.shape][view_angle]][0], (0,0))
+            if self.selected_corner is not None:
+                surf.blit(images['_corner', (self.selected_corner+view_angle)%4][ROTATED_SHAPES_SURFACE[self.shape][view_angle]][0], (0,0))
+            img = surf, x, y
+        return img
 
     def get_wall_images_and_height(self, view_angle):
         for wall, height in self.walls:
@@ -224,6 +248,17 @@ class TerrainElement:
                     self.walls.append((c, h0))
                 else:
                     self.walls.append((WALL_EXTENSION[c], h0))
+
+    def subtile_at_pos(self, view_angle, pos):
+         subtile,_,_ = images['_subtile'][ROTATED_SHAPES_SURFACE[self.shape][view_angle]]
+         px = subtile.get_at(pos)
+         if px[3]:
+             return {
+                (0,0):     [Subtiles.SW, Subtiles.SE, Subtiles.NE, Subtiles.NW][-view_angle],
+                (255,0):   [Subtiles.SE, Subtiles.NE, Subtiles.NW, Subtiles.SW][-view_angle],
+                (255,255): [Subtiles.NE, Subtiles.NW, Subtiles.SW, Subtiles.SE][-view_angle],
+                (0,255):   [Subtiles.NW, Subtiles.SW, Subtiles.SE, Subtiles.NE][-view_angle],
+             }.get((px[0], px[1]), None)
 
 def create_sample_terrain():
     terrain = s = []

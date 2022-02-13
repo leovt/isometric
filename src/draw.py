@@ -1,7 +1,7 @@
 import pygame
 from pygame import HWSURFACE, DOUBLEBUF, RESIZABLE, QUIT
 
-from world import load_assets, blits, View, update, Selector, Z_OFFSET
+from world import load_assets, blits, View, update, Selector, Z_OFFSET, ElementType
 import terrain
 
 FPS = 60
@@ -44,10 +44,14 @@ def main():
 
     height_change_tile = None
 
+    ghost = True
+
     while running:
         selector = Selector(pygame.mouse.get_pos())
         screen.fill((148, 179, 167))
         screen.blits(blit_sequence=blits(view, selector), doreturn=False)
+        if ghost:
+            screen.blits(blit_sequence=selector.ghost(), doreturn=False)
         show_info(selector)
         pygame.display.flip()
 
@@ -78,15 +82,21 @@ def main():
                 drag_start_coord = event.pos
                 drag_button = event.button
                 if event.button == 1:
-                    if hasattr(selector.info, 'move_down'):
-                        height_change_tile = selector.info
+                    if selector.type == ElementType.TERRAIN_SURFACE:
+                        height_change_tile = selector.element
+                        height_change_tile.selected = True
+                        height_change_tile.selected_corner = selector.subtile
+                        ghost = False
                     else:
                         height_change_tile = None
 
             elif event.type==pygame.MOUSEBUTTONUP:
                 drag_start_coord = None
                 drag_button = None
+                if height_change_tile:
+                    height_change_tile.selected = False
                 height_change_tile = None
+                ghost = True
 
             elif event.type==pygame.MOUSEMOTION:
                 if drag_button == 2:
@@ -95,10 +105,10 @@ def main():
                     drag_start_coord = event.pos
                 elif drag_button == 1 and height_change_tile:
                     if event.pos[1] - drag_start_coord[1] > 2*Z_OFFSET:
-                        height_change_tile.move_down()
+                        height_change_tile.move_corner_down(height_change_tile.selected_corner)
                         drag_start_coord = drag_start_coord[0], drag_start_coord[1] + 2*Z_OFFSET
                     if event.pos[1] - drag_start_coord[1] < -2*Z_OFFSET:
-                        height_change_tile.move_up()
+                        height_change_tile.move_corner_up(height_change_tile.selected_corner)
                         drag_start_coord = drag_start_coord[0], drag_start_coord[1] - 2*Z_OFFSET
 
 

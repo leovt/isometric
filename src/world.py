@@ -1,4 +1,5 @@
 import math
+import enum
 from dataclasses import dataclass
 from collections import defaultdict
 import pygame
@@ -10,6 +11,13 @@ VIEW_FROM_SW = 0
 VIEW_FROM_NW = 1
 VIEW_FROM_NE = 2
 VIEW_FROM_SE = 3
+
+class ElementType(enum.Flag):
+    NONE = 0
+    TERRAIN_SURFACE = enum.auto()
+    TERRAIN_WALL = enum.auto()
+    TRACK = enum.auto()
+    CAR = enum.auto()
 
 IMAGES = {
     'trkNS': ('art/models/track/0000.png', 64, 32, 0, 0, 128, 64),
@@ -306,13 +314,16 @@ class Selector:
         self.selected = None
         self.e = None
         self.n = None
-        self.info = None
-        self.mask_pixel = None
+        self.element = None
+        self.subtile = None
+        self.type = None
 
     def details(self):
-        return f'position: {self.x},{self.y}\nelement: {self.info}\nmask: {self.mask_pixel}'
+        subtile = getattr(self.subtile, 'name', str(self.subtile))
+        type = getattr(self.type, 'name', str(self.type))
+        return f'position: {self.x},{self.y}\ntype: {type}\nelement: {self.element}\nsubtile: {subtile}'
 
-    def check(self, surf, x, y, e, n, info, mask=None):
+    def check(self, surf, x, y, e, n, type, element, view_angle):
         sw, sh = surf.get_size()
         if x <= self.x < x+sw and y <= self.y < y+sh:
             pixel = surf.get_at((self.x - x, self.y - y))
@@ -320,12 +331,12 @@ class Selector:
                 self.selected = (surf, (x, y))
                 self.e = e
                 self.n = n
-                self.info = info
-                if mask:
-                    self.mask_pixel = mask.get_at((self.x - x, self.y - y))
+                self.type = type
+                self.element = element
+                if type & ElementType.TERRAIN_SURFACE:
+                    self.subtile = element.subtile_at_pos(view_angle, (self.x - x, self.y - y))
                 else:
-                    self.mask_pixel = None
-
+                    self.subtile = None
 
     def ghost(self):
         if self.selected:
@@ -365,12 +376,7 @@ def blits(view: View, selector=None):
                     x = view.x_offset + TILE_HALF_WIDTH * (v-u) - dx
                     y = view.y_offset + TILE_HALF_WIDTH * (u+v+1)//2 - h0*Z_OFFSET - dy  #+1 because the tile is actually at u+0.5, v+0.5
 
-                    #if rot_tile == 'grass':
-                    #    mask = 'surfm'
-                    #else:
-                    #    mask = 'surfm' + rot_tile[4:]
-
-                    selector.check(surf, x, y, int(e), int(n), terr)
+                    selector.check(surf, x, y, int(e), int(n), ElementType.TERRAIN_SURFACE, terr, view.angle)
                     yield surf, (x, y)
 
                     for img, h0 in terr.get_wall_images_and_height(view.angle):
@@ -378,7 +384,7 @@ def blits(view: View, selector=None):
                         x = view.x_offset + TILE_HALF_WIDTH * (v-u) - dx
                         y = view.y_offset + TILE_HALF_WIDTH * (u+v+1)//2 - h0*Z_OFFSET - dy  #+1 because the tile is actually at u+0.5, v+0.5
 
-                        selector.check(surf, x, y, int(e), int(n), terr)
+                        selector.check(surf, x, y, int(e), int(n), ElementType.TERRAIN_WALL, terr, view.angle)
                         yield surf, (x, y)
 
 
@@ -391,7 +397,7 @@ def blits(view: View, selector=None):
                     x = view.x_offset + TILE_HALF_WIDTH * (v-u) - dx
                     y = view.y_offset + TILE_HALF_WIDTH * (u+v+1)//2 - h*Z_OFFSET - dy  #+1 because the tile is actually at u+0.5, v+0.5
 
-                    selector.check(surf, x, y, int(e), int(n), t)
+                    selector.check(surf, x, y, int(e), int(n), ElementType.NONE, t, view.angle)
                     yield surf, (x, y)
                 elif t_type == 'TRACK':
                     ride = t[1]
@@ -406,7 +412,7 @@ def blits(view: View, selector=None):
                             x = view.x_offset + TILE_HALF_WIDTH * (v-u) - dx
                             y = view.y_offset + TILE_HALF_WIDTH * (u+v+1)//2 - rtp.height*Z_OFFSET - dy  #+1 because the tile is actually at u+0.5, v+0.5
 
-                            selector.check(surf, x, y, int(e), int(n), rtp)
+                            selector.check(surf, x, y, int(e), int(n), ElementType.TRACK, rtp, view.angle)
                             yield surf, (x, y)
 
                             prep_sprites = []
@@ -431,6 +437,5 @@ def blits(view: View, selector=None):
                                 masked = masked_blit(surf, x, y, mask, xm, ym)
                                 if masked:
                                     surf, (x, y) = masked
-                                    selector.check(surf, x, y, int(e), int(n), car)
+                                    selector.check(surf, x, y, int(e), int(n), ElementType.CAR, car, view.angle)
                                     yield surf, (x, y)
-    yield from selector.ghost()
