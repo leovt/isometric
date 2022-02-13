@@ -63,5 +63,11 @@ The location, where the map is drawn (scrolling) is determined by an offset (the
     x = x_offset + TILE_HALF_WIDTH * (v - u)
     y = y_offset + TILE_HALF_WIDTH * (u + v) / 2 - Z_OFFSET * z
 
+## Scale
 
+The following picture illustrates a possible scale of 128 px height equal to about 2.40m
+This means peeps would be around 90px high. 
+Finally look and feel are more important than a rigorous adherence to a scale.
+
+![Scale](Scale.png)
 
