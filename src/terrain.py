@@ -120,14 +120,17 @@ WALL_EXTENSION = [
 ]
 
 
-SURFACE_MATERIALS = [
-    ('grass', 'art/surface_grass.png', 0),
+SURFACE_SPECIALS = [
     ('_subtile', 'art/surface_masks.png', 0),
     ('_border', 'art/surface_border.png', 0),
     (('_corner', Subtiles.SW), 'art/surface_markings.png', 0),
     (('_corner', Subtiles.SE), 'art/surface_markings.png', 128),
     (('_corner', Subtiles.NE), 'art/surface_markings.png', 256),
     (('_corner', Subtiles.NW), 'art/surface_markings.png', 384),
+]
+
+SURFACE_MATERIALS = [
+    ('grass', 'art/surface_grass.png', 0),
 ]
 
 WALL_MATERIALS = [
@@ -139,11 +142,26 @@ def load_assets():
     X_OFFSET = [64, 0, 64, 0, 64, 0]
     global images
     images = {}
+    for name, fname, y in SURFACE_SPECIALS:
+        src = pygame.image.load(fname).convert_alpha()
+        images[name] = [
+            (src.subsurface(pygame.Rect(i*128, y, 128, 128)), 64, Y_OFFSET[i])
+            for i in range(TerrainShape.NUMBER_OF_IMAGES)]
+
     for name, fname, y in SURFACE_MATERIALS:
         src = pygame.image.load(fname).convert_alpha()
         images[name] = [
             (src.subsurface(pygame.Rect(i*128, y, 128, 128)), 64, Y_OFFSET[i])
             for i in range(TerrainShape.NUMBER_OF_IMAGES)]
+        src = src.copy()
+        border = images['_border'][0][0].get_abs_parent()
+        border = border.copy()
+        border.fill((0,0,0,128), special_flags=pygame.BLEND_RGBA_MULT)
+        src.blit(border, (0,0))
+        images[name] = [
+            (src.subsurface(pygame.Rect(i*128, y, 128, 128)), 64, Y_OFFSET[i])
+            for i in range(TerrainShape.NUMBER_OF_IMAGES)]
+
     for name, fname in WALL_MATERIALS:
         src = pygame.image.load(fname).convert_alpha()
         images[name] = [
