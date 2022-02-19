@@ -209,7 +209,6 @@ for a,b in zip(ride.track[12:15], ride.track[13:16]):
 ride.cars = [Car(ride, Sprite('lok', 3.5, 0.5, 0, 0))]
 ride.cars_on_track = [set() for _ in ride.track]
 
-from terrain import terrain
 worldmap = [  # S -----> N       W v E
     [[('TERRAIN',)],   [('TERRAIN',)],   [('TERRAIN',)],   [('TERRAIN',)],   [('TERRAIN',)],   [('TERRAIN',)],   ],
     [[('TERRAIN',), ('TRACK', ride, 11)],   [('TERRAIN',), ('TRACK', ride, 11)],   [('TERRAIN',), ('TRACK', ride, 10)],   [('TERRAIN',), ('TRACK', ride, 9)],   [('TERRAIN',), ('TRACK', ride, 9)],   [('TERRAIN',)],   ],
@@ -220,6 +219,16 @@ worldmap = [  # S -----> N       W v E
     [[('TERRAIN',), ('TRACK', ride, 3)],   [('TERRAIN',), ('TRACK', ride, 3)],   [('TERRAIN',), ('TRACK', ride, 12)],   [('TERRAIN',), ('TRACK', ride, 5), ('TRACK', ride, 13)],   [('TERRAIN',), ('TRACK', ride, 5), ('TRACK', ride, 14)],   [('TERRAIN',), ('TRACK', ride, 15)],   ],
     [[('TERRAIN',), ('TRACK', ride, 3)],   [('TERRAIN',), ('TRACK', ride, 3)],   [('TERRAIN',), ('TRACK', ride, 4)],   [('TERRAIN',), ('TRACK', ride, 5)],   [('TERRAIN',), ('TRACK', ride, 5)],   [('TERRAIN',)],   ],
 ]
+
+def link_terrain():
+    from terrain import terrain
+    for rw, rt in zip(worldmap, terrain):
+        for w, t in zip(rw,rt):
+            for i,l in enumerate(w):
+                if l[0] == 'TERRAIN':
+                    w[i:i+1] = [('TERRAIN', t)]
+link_terrain()
+del link_terrain
 
 rides = [ride]
 del ride
@@ -367,11 +376,11 @@ def blits(view: View, selector=None):
     for u in range(U):
         for v in range(V):
             e,n = view.en_from_uv(u+0.5, v+0.5)
-            terr = terrain[int(e)][int(n)]
 
             for t in worldmap[int(e)][int(n)]:
                 t_type = t[0]
                 if t_type == 'TERRAIN':
+                    terr = t[1]
                     h0 = terr.height
                     surf, dx, dy = terr.get_surface_image(view)
                     x = view.x_offset + TILE_HALF_WIDTH * (v-u) - dx

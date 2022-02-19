@@ -37,13 +37,14 @@ class WallShape(enum.IntEnum):
     WALL_S = 3
     WALL_W_N = 4
     WALL_S_E = 5
-    NUMBER_OF_IMAGES = 6
+    FRONT = 6
     WALL_E_N = 6
     WALL_N_E = 7
     WALL_E = 8
     WALL_N = 9
     WALL_E_S = 10
     WALL_N_W = 11
+    NUMBER_OF_IMAGES = 12
 
 WS = WallShape
 
@@ -101,15 +102,15 @@ ROTATED_SHAPES_SURFACE = [
 ROTATED_SHAPES_WALLS = [
     (WS.WALL_W_S, WS.WALL_S_E, None, None),
     (WS.WALL_S_W, None, None, WS.WALL_W_N),
-    (WS.WALL_W, WS.WALL_S, None, None),
-    (WS.WALL_S, None, None, WS.WALL_W),
+    (WS.WALL_W, WS.WALL_S, WS.WALL_E, WS.WALL_N),
+    (WS.WALL_S, WS.WALL_E, WS.WALL_N, WS.WALL_W),
     (WS.WALL_W_N, WS.WALL_S_W, None, None),
     (WS.WALL_S_E, None, None, WS.WALL_W_S),
 
     (None, None, WS.WALL_W_S, WS.WALL_S_E),
     (None, WS.WALL_W_N, WS.WALL_S_W, None),
-    (None, None, WS.WALL_W, WS.WALL_S),
-    (None, WS.WALL_W, WS.WALL_S, None),
+    (WS.WALL_E, WS.WALL_N, WS.WALL_W, WS.WALL_S),
+    (WS.WALL_N, WS.WALL_W, WS.WALL_S, WS.WALL_E),
     (None, None, WS.WALL_W_N, WS.WALL_S_W),
     (None, WS.WALL_W_S, WS.WALL_S_E, None),
 ]
@@ -131,15 +132,17 @@ SURFACE_SPECIALS = [
 
 SURFACE_MATERIALS = [
     ('grass', 'art/surface_grass.png', 0),
+    ('water', 'art/surface_water.png', 0),
 ]
 
 WALL_MATERIALS = [
     ('dirt', 'art/cliff_dirt.png'),
+    ('waterfall', 'art/cliff_waterfall.png'),
 ]
 
 def load_assets():
     Y_OFFSET = [64, 48,48,48,48, 64,64,64,64, 64,64,64,64, 64,64,64,64, 48,48]
-    X_OFFSET = [64, 0, 64, 0, 64, 0]
+    X_OFFSET = [64, 0, 64, 0, 64, 0, 64, 0, 64, 0, 64, 0]
     global images
     images = {}
     for name, fname, y in SURFACE_SPECIALS:
@@ -165,7 +168,7 @@ def load_assets():
     for name, fname in WALL_MATERIALS:
         src = pygame.image.load(fname).convert_alpha()
         images[name] = [
-            (src.subsurface(pygame.Rect(i*64, 0, 64, 128)), X_OFFSET[i], 16)
+            (src.subsurface(pygame.Rect(i*64, 0, 64, 144)), X_OFFSET[i], 32)
             for i in range(WallShape.NUMBER_OF_IMAGES)]
 
 
@@ -195,9 +198,10 @@ class TerrainElement:
         return img
 
     def get_wall_images_and_height(self, view):
-        for wall, height in self.walls:
+        for wall, height, is_top in self.walls:
             if ROTATED_SHAPES_WALLS[wall][view.angle] is not None:
-                yield images[self.wall_material][ROTATED_SHAPES_WALLS[wall][view.angle]], height
+                if ROTATED_SHAPES_WALLS[wall][view.angle] < WS.FRONT or is_top:
+                    yield images[self.wall_material][ROTATED_SHAPES_WALLS[wall][view.angle]], height
 
     def __str__(self):
         return f'{self.__class__.__name__}(east={self.east}, north={self.north}, shape={self.shape.name}, corner_height={self.corner_height})'
@@ -259,13 +263,10 @@ class TerrainElement:
                 dh = max(a + 20, b + 20)
 
             if dh > 0:
-                self.walls.append((c, h))
+                self.walls.append((c, h, True))
                 h = 2*(h//2)
             for h0 in range(h-4, h-dh, -4):
-                if dh == 0:
-                    self.walls.append((c, h0))
-                else:
-                    self.walls.append((WALL_EXTENSION[c], h0))
+                self.walls.append((WALL_EXTENSION[c], h0, False))
 
     def subtile_at_pos(self, view, pos):
          subtile,_,_ = images['_subtile'][ROTATED_SHAPES_SURFACE[self.shape][view.angle]]
@@ -281,9 +282,9 @@ class TerrainElement:
 def create_sample_terrain():
     terrain = s = []
     terrain.extend([
-        [TerrainElement(terrain,0,0,(-2,-2,-2,-2)), TerrainElement(terrain,0,1), TerrainElement(terrain,0,2), TerrainElement(terrain,0,3), TerrainElement(terrain,0,4), TerrainElement(terrain,0,5,(0,0,0,2))],
-        [TerrainElement(terrain,1,0), TerrainElement(terrain,1,1), TerrainElement(terrain,1,2), TerrainElement(terrain,1,3), TerrainElement(terrain,1,4), TerrainElement(terrain,1,5,(0,2,2,0))],
-        [TerrainElement(terrain,2,0), TerrainElement(terrain,2,1,(0,0,2,0)), TerrainElement(terrain,2,2,(0,2,2,0)), TerrainElement(terrain,2,3), TerrainElement(terrain,2,4), TerrainElement(terrain,2,5,(2,4,4,2))],
+        [TerrainElement(terrain,0,0,(-2,-2,-2,-2), 'water', 'waterfall'), TerrainElement(terrain,0,1), TerrainElement(terrain,0,2), TerrainElement(terrain,0,3), TerrainElement(terrain,0,4), TerrainElement(terrain,0,5,(0,0,0,2))],
+        [TerrainElement(terrain,1,0,(0,0,0,0), 'water', 'waterfall'), TerrainElement(terrain,1,1), TerrainElement(terrain,1,2), TerrainElement(terrain,1,3), TerrainElement(terrain,1,4), TerrainElement(terrain,1,5,(0,2,2,0))],
+        [TerrainElement(terrain,2,0,(0,0,0,0), 'water', 'waterfall'), TerrainElement(terrain,2,1,(0,0,2,0)), TerrainElement(terrain,2,2,(0,2,2,0)), TerrainElement(terrain,2,3), TerrainElement(terrain,2,4), TerrainElement(terrain,2,5,(2,4,4,2))],
         [TerrainElement(terrain,3,0), TerrainElement(terrain,3,1,(0,0,2,2)), TerrainElement(terrain,3,2,(2,2,2,2)), TerrainElement(terrain,3,3,(0,2,2,0)), TerrainElement(terrain,3,4), TerrainElement(terrain,3,5,(4,6,6,4))],
         [TerrainElement(terrain,4,0), TerrainElement(terrain,4,1,(0,0,2,2)), TerrainElement(terrain,4,2,(2,2,2,2)), TerrainElement(terrain,4,3,(2,2,2,2)), TerrainElement(terrain,4,4), TerrainElement(terrain,4,5,(6,6,6,6))],
         [TerrainElement(terrain,5,0), TerrainElement(terrain,5,1,(0,0,0,2)), TerrainElement(terrain,5,2,(2,0,0,2)), TerrainElement(terrain,5,3,(2,0,0,2)), TerrainElement(terrain,5,4), TerrainElement(terrain,5,5,(6,4,4,6))],

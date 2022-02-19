@@ -20,8 +20,10 @@ def render_text(text, font, dst, pos):
 
 def main():
     pygame.init()
+    pygame.display.init()
     pygame.display.set_caption(__file__)
     screen = pygame.display.set_mode((800,600), HWSURFACE|DOUBLEBUF|RESIZABLE)
+    print(pygame.display.get_driver())
     clock = pygame.time.Clock()
     font = pygame.font.SysFont("Arial", 18)
 
@@ -49,7 +51,8 @@ def main():
     while running:
         selector = Selector(pygame.mouse.get_pos())
         screen.fill((148, 179, 167))
-        screen.blits(blit_sequence=blits(view, selector), doreturn=False)
+        bls = list(blits(view, selector))
+        screen.blits(blit_sequence=bls, doreturn=False)
         if ghost:
             screen.blits(blit_sequence=selector.ghost(), doreturn=False)
         show_info(selector)
