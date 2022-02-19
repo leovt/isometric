@@ -150,7 +150,7 @@ def load_assets():
 
     for name, fname, y in SURFACE_MATERIALS:
         src = pygame.image.load(fname).convert_alpha()
-        images[name] = [
+        images[name, False] = [
             (src.subsurface(pygame.Rect(i*128, y, 128, 128)), 64, Y_OFFSET[i])
             for i in range(TerrainShape.NUMBER_OF_IMAGES)]
         src = src.copy()
@@ -158,7 +158,7 @@ def load_assets():
         border = border.copy()
         border.fill((0,0,0,128), special_flags=pygame.BLEND_RGBA_MULT)
         src.blit(border, (0,0))
-        images[name] = [
+        images[name, True] = [
             (src.subsurface(pygame.Rect(i*128, y, 128, 128)), 64, Y_OFFSET[i])
             for i in range(TerrainShape.NUMBER_OF_IMAGES)]
 
@@ -183,21 +183,21 @@ class TerrainElement:
         self.selected = False
         self.selected_corner = None
 
-    def get_surface_image(self, view_angle):
-        img = images[self.surf_material][ROTATED_SHAPES_SURFACE[self.shape][view_angle]]
+    def get_surface_image(self, view):
+        img = images[self.surf_material, view.show_grid][ROTATED_SHAPES_SURFACE[self.shape][view.angle]]
         if self.selected:
             surf, x, y = img
             surf = surf.copy()
-            surf.blit(images['_border'][ROTATED_SHAPES_SURFACE[self.shape][view_angle]][0], (0,0))
+            surf.blit(images['_border'][ROTATED_SHAPES_SURFACE[self.shape][view.angle]][0], (0,0))
             if self.selected_corner is not None:
-                surf.blit(images['_corner', (self.selected_corner+view_angle)%4][ROTATED_SHAPES_SURFACE[self.shape][view_angle]][0], (0,0))
+                surf.blit(images['_corner', (self.selected_corner+view.angle)%4][ROTATED_SHAPES_SURFACE[self.shape][view.angle]][0], (0,0))
             img = surf, x, y
         return img
 
-    def get_wall_images_and_height(self, view_angle):
+    def get_wall_images_and_height(self, view):
         for wall, height in self.walls:
-            if ROTATED_SHAPES_WALLS[wall][view_angle] is not None:
-                yield images[self.wall_material][ROTATED_SHAPES_WALLS[wall][view_angle]], height
+            if ROTATED_SHAPES_WALLS[wall][view.angle] is not None:
+                yield images[self.wall_material][ROTATED_SHAPES_WALLS[wall][view.angle]], height
 
     def __str__(self):
         return f'{self.__class__.__name__}(east={self.east}, north={self.north}, shape={self.shape.name}, corner_height={self.corner_height})'
@@ -267,15 +267,15 @@ class TerrainElement:
                 else:
                     self.walls.append((WALL_EXTENSION[c], h0))
 
-    def subtile_at_pos(self, view_angle, pos):
-         subtile,_,_ = images['_subtile'][ROTATED_SHAPES_SURFACE[self.shape][view_angle]]
+    def subtile_at_pos(self, view, pos):
+         subtile,_,_ = images['_subtile'][ROTATED_SHAPES_SURFACE[self.shape][view.angle]]
          px = subtile.get_at(pos)
          if px[3]:
              return {
-                (0,0):     [Subtiles.SW, Subtiles.SE, Subtiles.NE, Subtiles.NW][-view_angle],
-                (255,0):   [Subtiles.SE, Subtiles.NE, Subtiles.NW, Subtiles.SW][-view_angle],
-                (255,255): [Subtiles.NE, Subtiles.NW, Subtiles.SW, Subtiles.SE][-view_angle],
-                (0,255):   [Subtiles.NW, Subtiles.SW, Subtiles.SE, Subtiles.NE][-view_angle],
+                (0,0):     [Subtiles.SW, Subtiles.SE, Subtiles.NE, Subtiles.NW][-view.angle],
+                (255,0):   [Subtiles.SE, Subtiles.NE, Subtiles.NW, Subtiles.SW][-view.angle],
+                (255,255): [Subtiles.NE, Subtiles.NW, Subtiles.SW, Subtiles.SE][-view.angle],
+                (0,255):   [Subtiles.NW, Subtiles.SW, Subtiles.SE, Subtiles.NE][-view.angle],
              }.get((px[0], px[1]), None)
 
 def create_sample_terrain():

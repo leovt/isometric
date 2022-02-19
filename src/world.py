@@ -236,6 +236,7 @@ class View:
     angle: int
     x_offset: int
     y_offset: int
+    show_grid: bool
 
     def en_from_uv(self,u,v):
         if self.angle == VIEW_FROM_SW:
@@ -323,7 +324,7 @@ class Selector:
         type = getattr(self.type, 'name', str(self.type))
         return f'position: {self.x},{self.y}\ntype: {type}\nelement: {self.element}\nsubtile: {subtile}'
 
-    def check(self, surf, x, y, e, n, type, element, view_angle):
+    def check(self, surf, x, y, e, n, type, element, view):
         sw, sh = surf.get_size()
         if x <= self.x < x+sw and y <= self.y < y+sh:
             pixel = surf.get_at((self.x - x, self.y - y))
@@ -334,7 +335,7 @@ class Selector:
                 self.type = type
                 self.element = element
                 if type & ElementType.TERRAIN_SURFACE:
-                    self.subtile = element.subtile_at_pos(view_angle, (self.x - x, self.y - y))
+                    self.subtile = element.subtile_at_pos(view, (self.x - x, self.y - y))
                 else:
                     self.subtile = None
 
@@ -372,19 +373,19 @@ def blits(view: View, selector=None):
                 t_type = t[0]
                 if t_type == 'TERRAIN':
                     h0 = terr.height
-                    surf, dx, dy = terr.get_surface_image(view.angle)
+                    surf, dx, dy = terr.get_surface_image(view)
                     x = view.x_offset + TILE_HALF_WIDTH * (v-u) - dx
                     y = view.y_offset + TILE_HALF_WIDTH * (u+v+1)//2 - h0*Z_OFFSET - dy  #+1 because the tile is actually at u+0.5, v+0.5
 
-                    selector.check(surf, x, y, int(e), int(n), ElementType.TERRAIN_SURFACE, terr, view.angle)
+                    selector.check(surf, x, y, int(e), int(n), ElementType.TERRAIN_SURFACE, terr, view)
                     yield surf, (x, y)
 
-                    for img, h0 in terr.get_wall_images_and_height(view.angle):
+                    for img, h0 in terr.get_wall_images_and_height(view):
                         surf, dx, dy = img
                         x = view.x_offset + TILE_HALF_WIDTH * (v-u) - dx
                         y = view.y_offset + TILE_HALF_WIDTH * (u+v+1)//2 - h0*Z_OFFSET - dy  #+1 because the tile is actually at u+0.5, v+0.5
 
-                        selector.check(surf, x, y, int(e), int(n), ElementType.TERRAIN_WALL, terr, view.angle)
+                        selector.check(surf, x, y, int(e), int(n), ElementType.TERRAIN_WALL, terr, view)
                         yield surf, (x, y)
 
 
@@ -397,7 +398,7 @@ def blits(view: View, selector=None):
                     x = view.x_offset + TILE_HALF_WIDTH * (v-u) - dx
                     y = view.y_offset + TILE_HALF_WIDTH * (u+v+1)//2 - h*Z_OFFSET - dy  #+1 because the tile is actually at u+0.5, v+0.5
 
-                    selector.check(surf, x, y, int(e), int(n), ElementType.NONE, t, view.angle)
+                    selector.check(surf, x, y, int(e), int(n), ElementType.NONE, t, view)
                     yield surf, (x, y)
                 elif t_type == 'TRACK':
                     ride = t[1]
@@ -412,7 +413,7 @@ def blits(view: View, selector=None):
                             x = view.x_offset + TILE_HALF_WIDTH * (v-u) - dx
                             y = view.y_offset + TILE_HALF_WIDTH * (u+v+1)//2 - rtp.height*Z_OFFSET - dy  #+1 because the tile is actually at u+0.5, v+0.5
 
-                            selector.check(surf, x, y, int(e), int(n), ElementType.TRACK, rtp, view.angle)
+                            selector.check(surf, x, y, int(e), int(n), ElementType.TRACK, rtp, view)
                             yield surf, (x, y)
 
                             prep_sprites = []
@@ -437,5 +438,5 @@ def blits(view: View, selector=None):
                                 masked = masked_blit(surf, x, y, mask, xm, ym)
                                 if masked:
                                     surf, (x, y) = masked
-                                    selector.check(surf, x, y, int(e), int(n), ElementType.CAR, car, view.angle)
+                                    selector.check(surf, x, y, int(e), int(n), ElementType.CAR, car, view)
                                     yield surf, (x, y)

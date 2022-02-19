@@ -35,7 +35,7 @@ def main():
 
     running = True
 
-    view = View(0, 400, 100)
+    view = View(0, 400, 100, False)
 
     drag_start_coord = None
     drag_button = None
@@ -78,6 +78,8 @@ def main():
                     view.rotate(w/2, h/2)
                 if event.key==pygame.K_SPACE:
                     do_update = not do_update
+                if event.key==pygame.K_4:
+                    view.show_grid = not view.show_grid
             elif event.type==pygame.MOUSEBUTTONDOWN:
                 drag_start_coord = event.pos
                 drag_button = event.button
