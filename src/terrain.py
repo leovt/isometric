@@ -37,14 +37,18 @@ class WallShape(enum.IntEnum):
     WALL_S = 3
     WALL_W_N = 4
     WALL_S_E = 5
-    FRONT = 6
     WALL_E_N = 6
     WALL_N_E = 7
     WALL_E = 8
     WALL_N = 9
     WALL_E_S = 10
     WALL_N_W = 11
-    NUMBER_OF_IMAGES = 12
+
+    WALL_W_X = 12
+    WALL_S_X = 13
+    WALL_E_X = 14
+    WALL_N_X = 15
+
 
 WS = WallShape
 
@@ -100,24 +104,29 @@ ROTATED_SHAPES_SURFACE = [
 ]
 
 ROTATED_SHAPES_WALLS = [
-    (WS.WALL_W_S, WS.WALL_S_E, None, None),
-    (WS.WALL_S_W, None, None, WS.WALL_W_N),
+    (WS.WALL_W_S, WS.WALL_S_E, WS.WALL_E_N, WS.WALL_N_W),
+    (WS.WALL_S_W, WS.WALL_E_S, WS.WALL_N_E, WS.WALL_W_N),
     (WS.WALL_W, WS.WALL_S, WS.WALL_E, WS.WALL_N),
     (WS.WALL_S, WS.WALL_E, WS.WALL_N, WS.WALL_W),
-    (WS.WALL_W_N, WS.WALL_S_W, None, None),
-    (WS.WALL_S_E, None, None, WS.WALL_W_S),
+    (WS.WALL_W_N, WS.WALL_S_W, WS.WALL_E_S, WS.WALL_N_E),
+    (WS.WALL_S_E, WS.WALL_E_N, WS.WALL_N_W, WS.WALL_W_S),
 
-    (None, None, WS.WALL_W_S, WS.WALL_S_E),
-    (None, WS.WALL_W_N, WS.WALL_S_W, None),
+    (WS.WALL_E_N, WS.WALL_N_W, WS.WALL_W_S, WS.WALL_S_E),
+    (WS.WALL_N_E, WS.WALL_W_N, WS.WALL_S_W, WS.WALL_E_S),
     (WS.WALL_E, WS.WALL_N, WS.WALL_W, WS.WALL_S),
     (WS.WALL_N, WS.WALL_W, WS.WALL_S, WS.WALL_E),
-    (None, None, WS.WALL_W_N, WS.WALL_S_W),
-    (None, WS.WALL_W_S, WS.WALL_S_E, None),
+    (WS.WALL_E_S, WS.WALL_N_E, WS.WALL_W_N, WS.WALL_S_W),
+    (WS.WALL_N_W, WS.WALL_W_S, WS.WALL_S_E, WS.WALL_E_N),
+
+    (WS.WALL_W_X, WS.WALL_S_X, None, None),
+    (WS.WALL_S_X, None, None, WS.WALL_W_X),
+    (None, None, WS.WALL_W_X, WS.WALL_S_X),
+    (None, WS.WALL_W_X, WS.WALL_S_X, None),
 ]
 
 WALL_EXTENSION = [
-    WS.WALL_W, WS.WALL_S, WS.WALL_W, WS.WALL_S, WS.WALL_W, WS.WALL_S,
-    WS.WALL_E, WS.WALL_N, WS.WALL_E, WS.WALL_N, WS.WALL_E, WS.WALL_N,
+    WS.WALL_W_X, WS.WALL_S_X, WS.WALL_W_X, WS.WALL_S_X, WS.WALL_W_X, WS.WALL_S_X,
+    WS.WALL_E_X, WS.WALL_N_X, WS.WALL_E_X, WS.WALL_N_X, WS.WALL_E_X, WS.WALL_N_X,
 ]
 
 
@@ -138,6 +147,25 @@ SURFACE_MATERIALS = [
 WALL_MATERIALS = [
     ('dirt', 'art/cliff_dirt.png'),
     ('waterfall', 'art/cliff_waterfall.png'),
+]
+
+LAYOUT_WALL = [
+    ( (  0, 80, 64, 128), (64, 16) ),
+    ( ( 64, 80, 64, 128), ( 0, 16) ),
+    ( (128, 80, 64, 128), (64,  0) ),
+    ( (192, 80, 64, 128), ( 0,  0) ),
+    ( (256, 80, 64, 128), (64,  0) ),
+    ( (320, 80, 64, 128), ( 0,  0) ),
+
+    ( (320, 0, 64, 64), ( 0,  64) ),
+    ( (256, 0, 64, 64), (64,  64) ),
+    ( (192, 0, 64, 80), ( 0,  80) ),
+    ( (128, 0, 64, 80), (64,  80) ),
+    ( ( 64, 0, 64, 80), ( 0,  64) ),
+    ( (  0, 0, 64, 80), (64,  64) ),
+
+    ( (384, 80, 64, 128), (64,  0) ),
+    ( (448, 80, 64, 128), ( 0,  0) ),
 ]
 
 def load_assets():
@@ -168,8 +196,9 @@ def load_assets():
     for name, fname in WALL_MATERIALS:
         src = pygame.image.load(fname).convert_alpha()
         images[name] = [
-            (src.subsurface(pygame.Rect(i*64, 0, 64, 144)), X_OFFSET[i], 32)
-            for i in range(WallShape.NUMBER_OF_IMAGES)]
+                (src.subsurface(pygame.Rect(*r)),) + off
+                for r,off in LAYOUT_WALL]
+
 
 
 class TerrainElement:
@@ -198,10 +227,9 @@ class TerrainElement:
         return img
 
     def get_wall_images_and_height(self, view):
-        for wall, height, is_top in self.walls:
+        for wall, height in self.walls:
             if ROTATED_SHAPES_WALLS[wall][view.angle] is not None:
-                if ROTATED_SHAPES_WALLS[wall][view.angle] < WS.FRONT or is_top:
-                    yield images[self.wall_material][ROTATED_SHAPES_WALLS[wall][view.angle]], height
+                yield images[self.wall_material][ROTATED_SHAPES_WALLS[wall][view.angle]], height
 
     def __str__(self):
         return f'{self.__class__.__name__}(east={self.east}, north={self.north}, shape={self.shape.name}, corner_height={self.corner_height})'
@@ -263,10 +291,10 @@ class TerrainElement:
                 dh = max(a + 20, b + 20)
 
             if dh > 0:
-                self.walls.append((c, h, True))
+                self.walls.append((c, h))
                 h = 2*(h//2)
             for h0 in range(h-4, h-dh, -4):
-                self.walls.append((WALL_EXTENSION[c], h0, False))
+                self.walls.append((WALL_EXTENSION[c], h0))
 
     def subtile_at_pos(self, view, pos):
          subtile,_,_ = images['_subtile'][ROTATED_SHAPES_SURFACE[self.shape][view.angle]]
