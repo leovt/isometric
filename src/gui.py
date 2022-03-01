@@ -1,4 +1,6 @@
 import pygame
+import ctypes
+import ctypes.wintypes
 
 class Widget:
     def __init__(self, parent):
@@ -193,15 +195,27 @@ class TopWindow(Frame):
             self.top += event.pos[1] - self.drag_pos[1]
             self.drag_pos = event.pos
 
+dpi = 96
+def make_dpi_aware():
+    global dpi
+    DPI_AWARENESS_CONTEXT_SYSTEM_AWARE = ctypes.wintypes.HANDLE(-2)
+    ctypes.windll.user32.SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_SYSTEM_AWARE)
+    dpi = ctypes.windll.user32.GetDpiForSystem()
+
+def size(base):
+    return base * dpi // 96
+
 import pygame
 from pygame import HWSURFACE, DOUBLEBUF, RESIZABLE, QUIT
 
 def main():
+    make_dpi_aware()
     pygame.init()
     pygame.display.init()
     pygame.display.set_caption(__file__)
-    screen = pygame.display.set_mode((800,600), HWSURFACE|DOUBLEBUF|RESIZABLE)
-    font = pygame.font.SysFont("Arial", 18)
+    screen = pygame.display.set_mode((size(800), size(600)), HWSURFACE|DOUBLEBUF|RESIZABLE)
+    font_size = size(18)
+    font = pygame.font.SysFont("Arial", font_size)
     clock = pygame.time.Clock()
 
     root = Frame(None, 3, 3)
@@ -215,13 +229,13 @@ def main():
     root.manage_child_pos(2, 1, btn2, 's')
     root.manage_child_pos(1, 2, btn3, 'ns')
 
-    tw = TopWindow(root, 'Window Title', font, 1, 1, 231, 111, 300, 200)
+    tw = TopWindow(root, 'Window Title', font, 1, 1, size(231), size(111), size(300), size(200))
 
     btn4 = Button(tw, 'Button 4', font)
-    tw.manage_child_pos(0,0,btn4,'')
+    tw.manage_child_pos(0,0,btn4,'n')
 
     assert tw in root.children
-    root.layout(800, 600)
+    root.layout(*screen.get_size())
 
     running = True
     frame = 0
