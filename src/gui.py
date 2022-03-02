@@ -20,8 +20,45 @@ class Widget:
 from collections import namedtuple
 ChildRef = namedtuple('ChildRef', 'row,col,widget,sticky')
 
-class Frame(Widget):
+class MouseEventMixin:
+    mouse_focus_child = None
+    def process_mouse_event(self, event, local_pos = None):
+        if event.type not in (pygame.MOUSEBUTTONDOWN, pygame.MOUSEMOTION, pygame.MOUSEBUTTONUP):
+            return
+        if local_pos is None:
+            local_pos = event.pos
+
+        if self.mouse_focus_child is None:
+            for child in self.children:
+                if (hasattr(child, 'process_mouse_event') and
+                    child.left <= local_pos[0] < child.left + child.width and
+                    child.top <= local_pos[1] < child.top + child.height):
+
+                    if event.type == pygame.MOUSEBUTTONDOWN:
+                        self.mouse_focus_child = child
+
+        if self.mouse_focus_child is not None:
+            self.mouse_focus_child.process_mouse_event(event, (local_pos[0] - self.mouse_focus_child.left, local_pos[1] - self.mouse_focus_child.top))
+        else:
+            if event.type == pygame.MOUSEBUTTONDOWN and hasattr(self, 'on_mouse_down'):
+                self.on_mouse_down(event)
+            elif event.type == pygame.MOUSEMOTION and hasattr(self, 'on_mouse_move'):
+                self.on_mouse_move(event)
+            elif event.type == pygame.MOUSEBUTTONUP and hasattr(self, 'on_mouse_up'):
+                self.on_mouse_up(event)
+
+        if event.type == pygame.MOUSEBUTTONUP and self.mouse_focus_child is not None:
+            del self.mouse_focus_child
+
+
+
+class Frame(Widget, MouseEventMixin):
     def __init__(self, parent, rows, cols, fixed_width=0, fixed_height=0, pad_left=0, pad_top=0, pad_right=0, pad_bottom=0):
+        self.pad_left = pad_left
+        self.pad_top = pad_top
+        self.pad_right = pad_right
+        self.pad_bottom = pad_bottom
+
         if isinstance(rows, int):
             self.row_weights = (1,) * rows
         else:
@@ -51,12 +88,12 @@ class Frame(Widget):
     def min_width(self):
         if self.fixed_width:
             return self.fixed_width
-        return sum(self.min_colwidths())
+        return sum(self.min_colwidths()) + self.pad_left + self.pad_right
 
     def min_height(self):
         if self.fixed_height:
             return self.fixed_height
-        return sum(self.min_rowheights())
+        return sum(self.min_rowheights()) + self.pad_top + self.pad_bottom
 
     def min_colwidths(self):
         return [max((x.widget.min_width() for x in row), default=0) for row in self.rows]
@@ -92,8 +129,8 @@ class Frame(Widget):
 
         for child in self.managed_children:
             i, j = child.row, child.col
-            left = sum(self.col_widths[:j])
-            top = sum(self.row_heights[:i])
+            left = sum(self.col_widths[:j]) + self.pad_left
+            top = sum(self.row_heights[:i]) + self.pad_top
             width = child.widget.min_width()
             height = child.widget.min_height()
 
@@ -132,13 +169,14 @@ class Frame(Widget):
                 subsurf = surf.subsurface(rect)
                 child.draw(subsurf, rect.left-child.left, rect.top-child.top)
 
-class Button(Widget):
+class Button(Widget, MouseEventMixin):
     def __init__(self, parent, text, font):
         Widget.__init__(self, parent)
         self.text = text
         self.text_width, self.text_height = font.size(text)
         self.font = font
         self.pressed = False
+        self.command = int
 
     def min_width(self):
         return self.text_width + 10
@@ -162,6 +200,13 @@ class Button(Widget):
 
         surf.blit(self.font.render(self.text, 1, pygame.Color("black")),
             ((w - self.text_width)//2, (h - self.text_height)//2))
+
+    def on_mouse_down(self, event):
+        self.pressed = True
+
+    def on_mouse_up(self, event):
+        self.pressed = False
+        self.command()
 
 
 class TopWindow(Frame):
@@ -252,14 +297,7 @@ def main():
                 screen = pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE)
                 root.layout(*screen.get_size())
             elif event.type in (pygame.MOUSEBUTTONDOWN, pygame.MOUSEMOTION, pygame.MOUSEBUTTONUP):
-                if tw.left <= event.pos[0] < tw.left + tw.width and \
-                   tw.top <= event.pos[1] < tw.top + tw.height:
-                    if event.type == pygame.MOUSEBUTTONDOWN:
-                        tw.on_mouse_down(event)
-                    elif event.type == pygame.MOUSEBUTTONUP:
-                        tw.on_mouse_up(event)
-                    elif event.type == pygame.MOUSEMOTION:
-                        tw.on_mouse_move(event)
+                root.process_mouse_event(event)
 
         clock.tick(30)
 
