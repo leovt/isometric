@@ -10,11 +10,59 @@ class Widget:
         self.width = 0
         self.height = 0
         self.children = []
+        self.border = None
+        self.background = None
+        self.relief = 'flat'
+
         if parent is not None:
             parent.register(self)
 
     def register(self, child):
         self.children.append(child)
+
+    def draw(self, surf, offset_x, offset_y):
+        if self.background is not None:
+            surf.fill(self.background)
+
+        highlight = (255, 255, 255)
+        shadow = (0, 0, 0)
+
+        if self.border is not None:
+            if self.relief == 'raised':
+                tl = highlight
+                br = shadow
+            elif self.relief == 'sunken':
+                tl = shadow
+                br = highlight
+
+            if self.relief in ('raised, sunken'):
+                a,b,c,d = -offset_x, self.border - offset_x, self.width - self.border - offset_x, self.width - offset_x
+                u,v,w,x = -offset_y, self.border - offset_y, self.height - self.border - offset_y, self.height - offset_y
+                pygame.draw.polygon(surf, tl, [
+                    (a,u),
+                    (d,u),
+                    (c,v),
+                    (b,v),
+                    (b,w),
+                    (a,x),
+                    (a,u),])
+                pygame.draw.polygon(surf, br, [
+                    (d,x),
+                    (a,x),
+                    (b,w),
+                    (c,w),
+                    (c,v),
+                    (d,u),
+                    (d,x),])
+
+        if hasattr(self, 'client_draw'):
+            self.client_draw(surf, offset_x, offset_y)
+        for child in self.children:
+            rect = pygame.Rect(child.left - offset_x, child.top - offset_y, child.width, child.height)
+            rect = rect.clip(surf.get_rect())
+            if rect.width and rect.height:
+                subsurf = surf.subsurface(rect)
+                child.draw(subsurf, rect.left-child.left, rect.top-child.top)
 
 
 from collections import namedtuple
@@ -161,51 +209,36 @@ class Frame(Widget, MouseEventMixin):
             except AttributeError:
                 pass
 
-    def draw(self, surf, offset_x, offset_y):
-        for child in self.children:
-            rect = pygame.Rect(child.left - offset_x, child.top - offset_y, child.width, child.height)
-            rect = rect.clip(surf.get_rect())
-            if rect.width and rect.height:
-                subsurf = surf.subsurface(rect)
-                child.draw(subsurf, rect.left-child.left, rect.top-child.top)
-
 class Button(Widget, MouseEventMixin):
     def __init__(self, parent, text, font):
         Widget.__init__(self, parent)
         self.text = text
         self.text_width, self.text_height = font.size(text)
         self.font = font
-        self.pressed = False
         self.command = int
+        self.background = (194, 217, 178)
+        self.border = 4
+        self.relief = 'raised'
 
     def min_width(self):
-        return self.text_width + 10
+        return self.text_width + size(10) + 2*self.border
 
     def min_height(self):
-        return self.text_height + 10
+        return self.text_height + size(10) + 2*self.border
 
     def layout(self, width, height):
         pass
 
-    def draw(self, surf, offset_x, offset_y):
+    def client_draw(self, surf, offset_x, offset_y):
         w, h = surf.get_size()
-
-        if self.pressed:
-            surf.fill((0, 0, 0), (0,0,w-2,h-2))
-            surf.fill((255, 255, 255), (2,2,w,h))
-        else:
-            surf.fill((0, 0, 0), (2,2,w,h))
-            surf.fill((255, 255, 255), (0,0,w-2,h-2))
-        surf.fill((194, 217, 178), (2,2,w-4,h-4))
-
         surf.blit(self.font.render(self.text, 1, pygame.Color("black")),
             ((w - self.text_width)//2, (h - self.text_height)//2))
 
     def on_mouse_down(self, event):
-        self.pressed = True
+        self.relief = 'sunken'
 
     def on_mouse_up(self, event):
-        self.pressed = False
+        self.relief = 'raised'
         self.command()
 
 
@@ -220,12 +253,13 @@ class TopWindow(Frame):
         self.text = text
         self.font = font
         self.drag_pos = None
+        self.border = size(1)
+        self.background = (123, 45, 67)
+        self.relief = 'raised'
 
-    def draw(self, surf, offset_x, offset_y):
-        surf.fill((128,112,144))
+    def client_draw(self, surf, offset_x, offset_y):
         surf.blit(self.font.render(self.text, 1, pygame.Color("black")),
             ((self.width - self.text_width - self.text_height)//2 - offset_x, -offset_y))
-        Frame.draw(self, surf, offset_x, offset_y)
 
     def on_mouse_down(self, event):
         self.drag_pos = event.pos
@@ -235,7 +269,6 @@ class TopWindow(Frame):
 
     def on_mouse_move(self, event):
         if self.drag_pos:
-            print(self.drag_pos, event.pos)
             self.left += event.pos[0] - self.drag_pos[0]
             self.top += event.pos[1] - self.drag_pos[1]
             self.drag_pos = event.pos
@@ -268,7 +301,6 @@ def main():
     btn1 = Button(root, 'hello', font)
     btn2 = Button(root, 'hello, world!', font)
     btn3 = Button(root, 'hi', font)
-    btn2.pressed = True
 
     root.manage_child_pos(2, 0, btn1, 'nwes')
     root.manage_child_pos(2, 1, btn2, 's')
@@ -277,6 +309,7 @@ def main():
     tw = TopWindow(root, 'Window Title', font, 1, 1, size(231), size(111), size(300), size(200))
 
     btn4 = Button(tw, 'Button 4', font)
+    btn4.border = size(10)
     tw.manage_child_pos(0,0,btn4,'n')
 
     assert tw in root.children
